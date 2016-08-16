@@ -1,0 +1,38 @@
+/*******************************************************************************
+* File Name       Modification History.txt
+* Anthor          WXJ     
+* Version         V1.00
+* Date            2013/3/21
+* Description     --    
+*******************************************************************************/
+
+//---- Modification History ----------------------------------------------------
+// DATE         2013/3/20
+// ANTHOR       Wxj
+// FILE         main.c
+// LINE         --
+// HISTORY      1,creat the project:Demo_UART
+// REMARKS      --
+//---- End of 2013/3/20 --------------------------------------------------------
+
+//---- Modification History ----------------------------------------------------
+// DATE         2013/3/20
+// ANTHOR       Wxj
+// FILE         stm32f10x_it.c
+// LINE         167
+// HISTORY      1,create a new function named USART1_IRQHandler;
+// REMARKS      the original one is too conplex to relize the function that 
+//              receive a byte-data
+//---- End of 2013/3/20 --------------------------------------------------------
+
+//---- Modification History ----------------------------------------------------
+// DATE         2013/3/21
+// ANTHOR       Wxj
+// FILE         main.c
+// LINE         all
+// HISTORY      delete all code in main.c,and recode it,removed usart1.c and 
+                usart2.c,create a new c name usart.c
+// REMARKS      the original one could not relize the USART_Commuinite 
+//---- End of 2013/3/21 --------------------------------------------------------
+
+/***************************** End of File ************************************/

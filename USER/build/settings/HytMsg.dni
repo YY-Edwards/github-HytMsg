@@ -1,0 +1,85 @@
+[DebugChecksum]
+Checksum=148466953
+[Stack]
+FillEnabled=0
+OverflowWarningsEnabled=1
+WarningThreshold=90
+SpWarningsEnabled=1
+WarnLogOnly=1
+UseTrigger=1
+TriggerName=main
+LimitSize=0
+ByteLimit=50
+[JLinkDriver]
+CStepIntDis=_ 0
+[Exceptions]
+StopOnUncaught=_ 0
+StopOnThrow=_ 0
+[CallStack]
+ShowArgs=0
+[Disassembly]
+MixedMode=1
+[struct_types]
+Fmt0=HdepeOpcode_t-Store	4	0
+Fmt1=HdpepEnd_t-Checksum	4	0
+Fmt2=HdpepEnd_t-MsgEnd	4	0
+Fmt3=HdpepHeader_t-Length	4	0
+Fmt4=HrnpHeader_t-CheckSum	4	0
+Fmt5=HrnpHeader_t-Length	4	0
+Fmt6=HrnpHeader_t-PN	4	0
+Fmt7=MessageHeader_t-Address	4	0
+Fmt8=MessageHeader_t-Header	4	0
+Fmt9=Message_t-Checksum	4	0
+Fmt10=OB_Message_t-TMLen	4	0
+Fmt11=OB_Message_t-dest	4	0
+Fmt12=OB_Message_t-src	4	0
+Fmt13=OB_Message_t-type	4	0
+Fmt14=OpcodeStruct_t-Mask	4	0
+Fmt15=OpcodeStruct_t-Opcode	4	0
+Fmt16=OpcodeTMS_t-Opcode	4	0
+[array_types]
+Fmt0=unsigned char[1000]	4	0
+Fmt1=unsigned char[160]	4	0
+Fmt2=unsigned char[256]	4	0
+Fmt3=unsigned char[540]	4	0
+Fmt4=wchar_t[256]	4	0
+[watch_formats]
+Fmt0={W}0:Msg.Checksum	4	0
+Fmt1={W}0:Sumofdata	4	0
+Fmt2={W}0:checksum	4	0
+Fmt3={W}0:crc	4	0
+Fmt4={W}0:p	4	0
+Fmt5={W}0:req	4	0
+Fmt6={W}0:rxcheck	4	0
+Fmt7={W}0:temp_1	4	0
+Fmt8={W}0:temp_2	4	0
+Fmt9={W}1:SrcIP	4	0
+Fmt10={W}1:Sumofdata	4	0
+Fmt11={W}1:ts	4	0
+[Log file]
+LoggingEnabled=_ 0
+LogFile=_ ""
+Category=_ 0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""
+[CallStackLog]
+Enabled=0
+[DriverProfiling]
+Enabled=0
+Mode=0
+Graph=0
+Symbiont=0
+Exclusions=
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.39.4" 0 0 1 "" 0 "" 0
+Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.264.5" 0 0 1 "" 0 "" 0
+Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.316.5" 0 0 1 "" 0 "" 0
+Bp3=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\bluetooth.c}.112.6" 0 0 1 "" 0 "" 0
+Bp4=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.298.5" 0 0 1 "" 0 "" 0
+Count=5
+[Aliases]
+Count=0
+SuppressDialog=0
