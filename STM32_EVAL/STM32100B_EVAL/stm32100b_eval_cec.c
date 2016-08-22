@@ -2,11 +2,11 @@
   ******************************************************************************
   * @file    stm32100b_eval_cec.c
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file provides all the STM32100B-EVAL HDMI-CEC firmware functions.
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -15,7 +15,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */
 
 /* Includes ------------------------------------------------------------------*/
@@ -98,19 +99,19 @@ HDMI_CEC_Map HDMI_CEC_DeviceMap[14];
 /* CEC follower addresses */
 uint8_t* HDMI_CEC_Follower_String[13][2] =
   {
-    {"         TV         ", "0"},
-    {"Recording Device 1  ", "0"},
-    {"Recording Device 2  ", "0"},
-    {"    Tuner 1         ", "0"},
-    {" Playback Device 1  ", "0"},
-    {"   Audio System     ", "0"},
-    {"    Tuner 2         ", "0"},
-    {"    Tuner 3         ", "0"},
-    {" Playback Device 2  ", "0"},
-    {"Recording Device 3  ", "0"},
-    {"      Tuner 4       ", "0"},
-    {" Playback Device 3  ", "0"},
-    {"     Broadcast      ", "1"}
+    {(uint8_t *)"         TV         ", (uint8_t *)"0"},
+    {(uint8_t *)"Recording Device 1  ", (uint8_t *)"0"},
+    {(uint8_t *)"Recording Device 2  ", (uint8_t *)"0"},
+    {(uint8_t *)"    Tuner 1         ", (uint8_t *)"0"},
+    {(uint8_t *)" Playback Device 1  ", (uint8_t *)"0"},
+    {(uint8_t *)"   Audio System     ", (uint8_t *)"0"},
+    {(uint8_t *)"    Tuner 2         ", (uint8_t *)"0"},
+    {(uint8_t *)"    Tuner 3         ", (uint8_t *)"0"},
+    {(uint8_t *)" Playback Device 2  ", (uint8_t *)"0"},
+    {(uint8_t *)"Recording Device 3  ", (uint8_t *)"0"},
+    {(uint8_t *)"      Tuner 4       ", (uint8_t *)"0"},
+    {(uint8_t *)" Playback Device 3  ", (uint8_t *)"0"},
+    {(uint8_t *)"     Broadcast      ", (uint8_t *)"1"}
   };
 
 /**
@@ -522,7 +523,7 @@ void HDMI_CEC_CommandCallBack(void)
       HDMI_CEC_MapStruct.LogicalAddress = (HDMI_CEC_RX_MessageStructPrivate.Header >> 0x4) & 0x0F;
       HDMI_CEC_MapStruct.DeviceType = HDMI_CEC_RX_MessageStructPrivate.Operande[2];
       HDMI_CEC_DeviceMap[DeviceCount] = HDMI_CEC_MapStruct;
-      HDMI_CEC_Follower_String[(HDMI_CEC_DeviceMap[DeviceCount].LogicalAddress)][1] = "1";
+      HDMI_CEC_Follower_String[(HDMI_CEC_DeviceMap[DeviceCount].LogicalAddress)][1] = (uint8_t *)"1";
       DeviceCount++;
       break;
 
@@ -698,7 +699,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[0][1] = "1";
+    HDMI_CEC_Follower_String[0][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -733,7 +734,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[1][1] = "1";
+    HDMI_CEC_Follower_String[1][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -767,7 +768,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[2][1] = "1";
+    HDMI_CEC_Follower_String[2][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -802,7 +803,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[3][1] = "1";
+    HDMI_CEC_Follower_String[3][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -835,7 +836,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[4][1] = "1";
+    HDMI_CEC_Follower_String[4][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -869,7 +870,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[5][1] = "1";
+    HDMI_CEC_Follower_String[5][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -903,7 +904,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[6][1] = "1";
+    HDMI_CEC_Follower_String[6][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -937,7 +938,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[7][1] = "1";
+    HDMI_CEC_Follower_String[7][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -971,7 +972,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[8][1] = "1";
+    HDMI_CEC_Follower_String[8][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -1005,7 +1006,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[9][1] = "1";
+    HDMI_CEC_Follower_String[9][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -1038,7 +1039,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[10][1] = "1";
+    HDMI_CEC_Follower_String[10][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -1071,7 +1072,7 @@ HDMI_CEC_Error HDMI_CEC_CheckConnectedDevices(void)
 
   if (errorstatus == HDMI_CEC_OK)
   {
-    HDMI_CEC_Follower_String[11][1] = "1";
+    HDMI_CEC_Follower_String[11][1] = (uint8_t *)"1";
     i++;
     errorstatus = HDMI_CEC_OK;
   }
@@ -1716,6 +1717,6 @@ static HDMI_CEC_Error LogicalAddressAllocation(void)
   * @}
   */  
 
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
 
 

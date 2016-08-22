@@ -2,12 +2,12 @@
   ******************************************************************************
   * @file    stm32_eval_sdio_sd.h
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file contains all the functions prototypes for the SD Card 
   *          stm32_eval_sdio_sd driver firmware library.
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -16,7 +16,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */ 
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -99,7 +100,7 @@ typedef enum
   SD_UNSUPPORTED_FEATURE,  
   SD_UNSUPPORTED_HW,  
   SD_ERROR,  
-  SD_OK  
+  SD_OK = 0 
 } SD_Error;
 
 /** 
@@ -189,6 +190,24 @@ typedef struct
   __IO uint8_t  CID_CRC;              /*!< CID CRC */
   __IO uint8_t  Reserved2;            /*!< always 1 */
 } SD_CID;
+
+/** 
+  * @brief SD Card Status 
+  */
+typedef struct
+{
+  __IO uint8_t DAT_BUS_WIDTH;
+  __IO uint8_t SECURED_MODE;
+  __IO uint16_t SD_CARD_TYPE;
+  __IO uint32_t SIZE_OF_PROTECTED_AREA;
+  __IO uint8_t SPEED_CLASS;
+  __IO uint8_t PERFORMANCE_MOVE;
+  __IO uint8_t AU_SIZE;
+  __IO uint16_t ERASE_SIZE;
+  __IO uint8_t ERASE_TIMEOUT;
+  __IO uint8_t ERASE_OFFSET;
+} SD_CardStatus;
+
 
 /** 
   * @brief SD Card information 
@@ -290,9 +309,9 @@ typedef struct
 #define SD_CMD_SD_APP_CHANGE_SECURE_AREA           ((uint8_t)49) /*!< For SD Card only */
 #define SD_CMD_SD_APP_SECURE_WRITE_MKB             ((uint8_t)48) /*!< For SD Card only */
   
+/* Uncomment the following line to select the SDIO Data transfer mode */  
 #define SD_DMA_MODE                                ((uint32_t)0x00000000)
-#define SD_INTERRUPT_MODE                          ((uint32_t)0x00000001)
-#define SD_POLLING_MODE                            ((uint32_t)0x00000002)
+/*#define SD_POLLING_MODE                            ((uint32_t)0x00000002)*/
 
 /**
   * @brief  SD detection on its memory slot
@@ -335,8 +354,8 @@ SD_Error SD_PowerON(void);
 SD_Error SD_PowerOFF(void);
 SD_Error SD_InitializeCards(void);
 SD_Error SD_GetCardInfo(SD_CardInfo *cardinfo);
+SD_Error SD_GetCardStatus(SD_CardStatus *cardstatus);
 SD_Error SD_EnableWideBusOperation(uint32_t WideMode);
-SD_Error SD_SetDeviceMode(uint32_t Mode);
 SD_Error SD_SelectDeselect(uint32_t addr);
 SD_Error SD_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize);
 SD_Error SD_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
@@ -348,7 +367,8 @@ SD_Error SD_Erase(uint32_t startaddr, uint32_t endaddr);
 SD_Error SD_SendStatus(uint32_t *pcardstatus);
 SD_Error SD_SendSDStatus(uint32_t *psdstatus);
 SD_Error SD_ProcessIRQSrc(void);
-
+SD_Error SD_WaitReadOperation(void);
+SD_Error SD_WaitWriteOperation(void);
 #ifdef __cplusplus
 }
 #endif
@@ -374,4 +394,4 @@ SD_Error SD_ProcessIRQSrc(void);
   * @}
   */ 
 
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

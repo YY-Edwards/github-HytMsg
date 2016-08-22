@@ -2,12 +2,12 @@
   ******************************************************************************
   * @file    stm3210c_eval_lcd.c
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file includes the LCD driver for AM-240320L8TNQW00H (LCD_ILI9320)
   *          Liquid Crystal Display Module of STM3210C-EVAL board.
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -16,7 +16,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */ 
 
 /* Includes ------------------------------------------------------------------*/
@@ -623,22 +624,22 @@ void LCD_DrawMonoPict(const uint32_t *Pict)
 //  uint32_t i = 0, size = 0;
 //
 //  /* Read bitmap size */
-//  SPI_FLASH_BufferRead((uint8_t*)&size, BmpAddress + 2, 4);
+//  sFLASH_ReadBuffer((uint8_t*)&size, BmpAddress + 2, 4);
 //
 //  /* get bitmap data address offset */
-//  SPI_FLASH_BufferRead((uint8_t*)&i, BmpAddress + 10, 4);
+//  sFLASH_ReadBuffer((uint8_t*)&i, BmpAddress + 10, 4);
 //  
 //  size = (size - i)/2;
 //
-//  SPI_FLASH_StartReadSequence(BmpAddress + i);
+//  sFLASH_StartReadSequence(BmpAddress + i);
 //
-//  /* Disable SPI1  */
-//  SPI_Cmd(SPI1, DISABLE);
+//  /* Disable LCD_SPI  */
+//  SPI_Cmd(LCD_SPI, DISABLE);
 //  /* SPI in 16-bit mode */
-//  SPI_DataSizeConfig(SPI1, SPI_DataSize_16b);
+//  SPI_DataSizeConfig(LCD_SPI, SPI_DataSize_16b);
 //
-//  /* Enable SPI1  */
-//  SPI_Cmd(SPI1, ENABLE);
+//  /* Enable LCD_SPI  */
+//  SPI_Cmd(LCD_SPI, ENABLE);
 //  
 //  /* Set GRAM write direction and BGR = 1 */
 //  /* I/D=00 (Horizontal : decrement, Vertical : decrement) */
@@ -650,21 +651,21 @@ void LCD_DrawMonoPict(const uint32_t *Pict)
 //  /* Read bitmap data from SPI Flash and send them to LCD */
 //  for(i = 0; i < size; i++)
 //  {
-//    LCD_WriteRAM(__REV_HalfWord(SPI_FLASH_SendHalfWord(0xA5A5)));
+//    LCD_WriteRAM(__REV_HalfWord(sFLASH_SendHalfWord(0xA5A5)));
 //  }
 //
 //  LCD_CtrlLinesWrite(LCD_NCS_GPIO_PORT, LCD_NCS_PIN, Bit_SET);
 //
 //  /* Deselect the FLASH: Chip Select high */
-//  SPI_FLASH_CS_HIGH();
+//  sFLASH_CS_HIGH();
 //
-//  /* Disable SPI1  */
-//  SPI_Cmd(SPI1, DISABLE);
+//  /* Disable LCD_SPI  */
+//  SPI_Cmd(LCD_SPI, DISABLE);
 //  /* SPI in 8-bit mode */
-//  SPI_DataSizeConfig(SPI1, SPI_DataSize_8b);
+//  SPI_DataSizeConfig(LCD_SPI, SPI_DataSize_8b);
 //
-//  /* Enable SPI1  */
-//  SPI_Cmd(SPI1, ENABLE);
+//  /* Enable LCD_SPI  */
+//  SPI_Cmd(LCD_SPI, ENABLE);
 //
 //  /* Set GRAM write direction and BGR = 1 */
 //  /* I/D = 01 (Horizontal : increment, Vertical : decrement) */
@@ -674,8 +675,8 @@ void LCD_DrawMonoPict(const uint32_t *Pict)
 
 
 /**
-  * @brief  Displays a bitmap picture loaded in the SPI Flash.
-  * @param  BmpAddress: Bmp picture address in the SPI Flash.
+  * @brief  Displays a bitmap picture loaded in the Internal FLASH.
+  * @param  BmpAddress: Bmp picture address in the Internal FLASH.
   * @retval None
   */
 void LCD_DrawBMP(const uint16_t *BmpAddress)
@@ -1008,7 +1009,7 @@ void LCD_FillPolyLine(pPoint Points, uint16_t PointCount)
       j = i; 
     }
   
-    /* Sort the nodes, via a simple “Bubble” sort. */
+    /* Sort the nodes, via a simple "Bubble" sort. */
     i = 0;
     while (i < nodes-1) 
     {
@@ -1403,4 +1404,4 @@ static void delay(__IO uint32_t nCount)
   * @}
   */  
   
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

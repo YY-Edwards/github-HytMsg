@@ -2,15 +2,15 @@
   ******************************************************************************
   * @file    stm3210c_eval.c
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file provides
   *            - set of firmware functions to manage Leds, push-button and COM ports
   *            - low level initialization functions for SD card (on SPI) and I2C
   *              serial EEPROM (sEE)
   *          available on STM3210C-EVAL evaluation board from STMicroelectronics.   
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -19,7 +19,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */ 
   
 /* Includes ------------------------------------------------------------------*/
@@ -402,14 +403,15 @@ void SD_LowLevel_Init(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
   GPIO_Init(SD_SPI_SCK_GPIO_PORT, &GPIO_InitStructure);
 
-  /*!< Configure SD_SPI pins: MISO */
-  GPIO_InitStructure.GPIO_Pin = SD_SPI_MISO_PIN;
-  GPIO_Init(SD_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
-
   /*!< Configure SD_SPI pins: MOSI */
   GPIO_InitStructure.GPIO_Pin = SD_SPI_MOSI_PIN;
   GPIO_Init(SD_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure);
 
+  /*!< Configure SD_SPI pins: MISO */
+  GPIO_InitStructure.GPIO_Pin = SD_SPI_MISO_PIN;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  
+  GPIO_Init(SD_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
+  
   /*!< Configure SD_SPI_CS_PIN pin: SD Card CS pin */
   GPIO_InitStructure.GPIO_Pin = SD_CS_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -599,4 +601,4 @@ void sEE_LowLevel_DMAConfig(uint32_t pBuffer, uint32_t BufferSize, uint32_t Dire
   * @}
   */ 
     
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

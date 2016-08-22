@@ -2,12 +2,12 @@
   ******************************************************************************
   * @file    stm3210c_eval_ioe.c
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file includes the IO Expander driver for STMPE811 IO Expander 
   *          devices.
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -16,10 +16,17 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */ 
 
   /* File Info : ---------------------------------------------------------------
+  
+    Note:
+    -----
+    - This driver uses the DMA method for sending and receiving data on I2C bus
+      which allow higher efficiency and reliability of the communication.  
+  
     SUPPORTED FEATURES:
       - IO Read/write : Set/Reset and Read (Polling/Interrupt)
       - Joystick: config and Read (Polling/Interrupt)
@@ -62,7 +69,7 @@
 /** @defgroup STM3210C_EVAL_IOE_Private_Defines
   * @{
   */ 
-#define TIMEOUT_MAX              0x1000  /*<! The value of the maximal timeout for I2C waiting loops */
+#define TIMEOUT_MAX             0x1000   /*<! The value of the maximal timeout for I2C waiting loops */
 
 #define TS_CONVERSION_DELAY     0x10000  /*<! The application should wait before ADC end of conversion. 
                                               This delay depends on the system clock frequency, the value 0x10000
@@ -86,7 +93,8 @@
   */ 
 TS_STATE TS_State;              /*<! The global structure holding the TS state */
 
-uint32_t TimeOut = TIMEOUT_MAX; /*<! Value of Timeout when I2C communication fails */
+uint32_t IOE_TimeOut = TIMEOUT_MAX; /*<! Value of Timeout when I2C communication fails */
+
 /**
   * @}
   */ 
@@ -101,6 +109,7 @@ static uint16_t IOE_TS_Read_Z(void);
 
 static void IOE_GPIO_Config(void);
 static void IOE_I2C_Config(void);
+static void IOE_DMA_Config(IOE_DMADirection_TypeDef Direction, uint8_t* buffer);
 static void IOE_EXTI_Config(void);
 
 #ifndef USE_Delay
@@ -127,6 +136,9 @@ uint8_t IOE_Config(void)
 {
   /* Configure the needed pins */
   IOE_GPIO_Config(); 
+  
+  /* Configure the I2C peripheral */
+  IOE_I2C_Config();
   
   /* Read IO Expander 1 ID  */
   if(IOE_IsOperational(IOE_1_ADDR))
@@ -494,7 +506,7 @@ FlagStatus IOE_GetGITStatus(uint8_t DeviceAddr, uint8_t Global_IT)
  
   /* get the Interrupt status */
   tmp = I2C_ReadDeviceRegister(DeviceAddr, IOE_REG_INT_STA);
-  
+    
   if ((tmp & (uint8_t)Global_IT) != 0)
   {
     return SET;
@@ -594,9 +606,9 @@ uint8_t IOE_IsOperational(uint8_t DeviceAddr)
   if( IOE_ReadID(DeviceAddr) != (uint16_t)STMPE811_ID )
   {
     /* Check if a Timeout occured */
-    if (TimeOut == 0)
+    if (IOE_TimeOut == 0)
     {
-      return IOE_TIEMOUT;
+      return (IOE_TimeoutUserCallback());
     }
     else
     {
@@ -1040,60 +1052,75 @@ uint8_t IOE_ITOutConfig(uint8_t Polarity, uint8_t Type)
   */
 uint8_t I2C_WriteDeviceRegister(uint8_t DeviceAddr, uint8_t RegisterAddr, uint8_t RegisterValue)
 {
-  uint32_t read_verif = 0;
-
-  /* Reset all I2C2 registers */
-  I2C_SoftwareResetCmd(IOE_I2C, ENABLE);
-  I2C_SoftwareResetCmd(IOE_I2C, DISABLE);
-
-  /* Enable the IOE_I2C peripheral  */
-  I2C_Cmd(IOE_I2C, ENABLE);
-
-  /* Configure the I2C peripheral */
-  IOE_I2C_Config();
-
-  /* Begin the config sequence */
+  uint32_t read_verif = 0;  
+  uint8_t IOE_BufferTX = 0;
+  
+  /* Get Value to be written */
+  IOE_BufferTX = RegisterValue;
+  
+  /* Configure DMA Peripheral */
+  IOE_DMA_Config(IOE_DMA_TX, (uint8_t*)(&IOE_BufferTX));
+  
+  /* Enable the I2C peripheral */
   I2C_GenerateSTART(IOE_I2C, ENABLE);
-
-  /* Test on EV5 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_MODE_SELECT))
+  
+  /* Test on SB Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_SB) == RESET) 
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
-
+  
   /* Transmit the slave address and enable writing operation */
   I2C_Send7bitAddress(IOE_I2C, DeviceAddr, I2C_Direction_Transmitter);
   
-  /* Test on EV6 and clear it */
-  TimeOut = TIMEOUT_MAX;
+  /* Test on ADDR Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
   while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
-  
+   
   /* Transmit the first address for r/w operations */
   I2C_SendData(IOE_I2C, RegisterAddr);
   
-  /* Test on EV8 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+  /* Test on TXE FLag (data dent) */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while ((!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_BTF)))  
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
   
-  /* Prepare the register value to be sent */
-  I2C_SendData(IOE_I2C, RegisterValue);
+  /* Enable I2C DMA request */
+  I2C_DMACmd(IOE_I2C,ENABLE);
   
-  /* Test on EV8 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+  /* Enable DMA TX Channel */
+  DMA_Cmd(IOE_DMA_TX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!DMA_GetFlagStatus(IOE_DMA_TX_TCFLAG))
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
+  }  
+  
+  /* Wait until BTF Flag is set before generating STOP */
+  IOE_TimeOut = 2 * TIMEOUT_MAX;
+  while ((!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_BTF)))  
+  {
   }
   
-  /* End the configuration sequence */
+  /* Send STOP Condition */
   I2C_GenerateSTOP(IOE_I2C, ENABLE);
+  
+  /* Disable DMA TX Channel */
+  DMA_Cmd(IOE_DMA_TX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(IOE_I2C,DISABLE);
+  
+  /* Clear DMA TX Transfer Complete Flag */
+  DMA_ClearFlag(IOE_DMA_TX_TCFLAG);
   
 #ifdef VERIFY_WRITTENDATA
   /* Verify (if needed) that the loaded data is correct  */
@@ -1126,87 +1153,91 @@ uint8_t I2C_WriteDeviceRegister(uint8_t DeviceAddr, uint8_t RegisterAddr, uint8_
   */
 uint8_t I2C_ReadDeviceRegister(uint8_t DeviceAddr, uint8_t RegisterAddr)
 {
-  uint32_t tmp = 0;
+  uint8_t IOE_BufferRX[2] = {0x00, 0x00};  
   
-  /* Disable the IOE_I2C peripheral  */
-  I2C_Cmd(IOE_I2C, DISABLE);
+  /* Configure DMA Peripheral */
+  IOE_DMA_Config(IOE_DMA_RX, (uint8_t*)IOE_BufferRX);
   
-  /* Reset all I2C2 registers */
-  I2C_SoftwareResetCmd(IOE_I2C, ENABLE);
-  I2C_SoftwareResetCmd(IOE_I2C, DISABLE);
-  
-  /* Configure the I2C peripheral */
-  IOE_I2C_Config();
+  /* Enable DMA NACK automatic generation */
+  I2C_DMALastTransferCmd(IOE_I2C, ENABLE);
   
   /* Enable the I2C peripheral */
   I2C_GenerateSTART(IOE_I2C, ENABLE);
- 
-  /* Test on EV5 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_MODE_SELECT))
-  {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
-  }
-  /* Disable Acknowledgement */
-  I2C_AcknowledgeConfig(IOE_I2C, DISABLE);
   
-  /* Transmit the slave address and enable writing operation */
+  /* Test on SB Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_SB)) 
+  {
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
+  }
+  
+  /* Send device address for write */
   I2C_Send7bitAddress(IOE_I2C, DeviceAddr, I2C_Direction_Transmitter);
   
-  /* Test on EV6 and clear it */
-  TimeOut = TIMEOUT_MAX;  
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
+  /* Test on ADDR Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) 
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
   
-  /* Transmit the first address for r/w operations */
-  I2C_SendData(IOE_I2C, RegisterAddr);
+  /* Send the device's internal address to write to */
+  I2C_SendData(IOE_I2C, RegisterAddr);  
   
-  /* Test on EV8 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+  /* Test on TXE FLag (data dent) */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while ((!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_BTF)))  
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
-  /* Regenerate a start condition */
+  
+  /* Send START condition a second time */  
   I2C_GenerateSTART(IOE_I2C, ENABLE);
   
-  /* Test on EV5 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_MODE_SELECT))
+  /* Test on SB Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_SB)) 
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
   
-  /* Transmit the slave address and enable writing operation */
+  /* Send IOExpander address for read */
   I2C_Send7bitAddress(IOE_I2C, DeviceAddr, I2C_Direction_Receiver);
   
-  /* Test on EV6 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))
+  /* Test on ADDR Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))   
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
+    
+  /* Enable I2C DMA request */
+  I2C_DMACmd(IOE_I2C,ENABLE);
   
-  /* Test on EV7 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_BYTE_RECEIVED))
+  /* Enable DMA RX Channel */
+  DMA_Cmd(IOE_DMA_RX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  IOE_TimeOut = 2 * TIMEOUT_MAX;
+  while (!DMA_GetFlagStatus(IOE_DMA_RX_TCFLAG))
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
-  }
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
+  }        
   
-  /* End the configuration sequence */
+  /* Send STOP Condition */
   I2C_GenerateSTOP(IOE_I2C, ENABLE);
   
-  /* Load the register value */
-  tmp = I2C_ReceiveData(IOE_I2C);
+  /* Disable DMA RX Channel */
+  DMA_Cmd(IOE_DMA_RX_CHANNEL, DISABLE);
   
-  /* Enable Acknowledgement */
-  I2C_AcknowledgeConfig(IOE_I2C, ENABLE);
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(IOE_I2C,DISABLE);
   
-  /* Return the read value */
-  return tmp;
+  /* Clear DMA RX Transfer Complete Flag */
+  DMA_ClearFlag(IOE_DMA_RX_TCFLAG);
+  
+  /* return a pointer to the IOE_Buffer */
+  return (uint8_t)IOE_BufferRX[0];  
 }
 
 
@@ -1218,103 +1249,98 @@ uint8_t I2C_ReadDeviceRegister(uint8_t DeviceAddr, uint8_t RegisterAddr)
   * @retval A pointer to the buffer containing the two returned bytes (in halfword).  
   */
 uint16_t I2C_ReadDataBuffer(uint8_t DeviceAddr, uint32_t RegisterAddr)
-{
-  uint8_t Buffer[2] = {0x00, 0x00};  
-
-  /* Disable the I2C1 peripheral  */
-  I2C_Cmd(I2C1, DISABLE);
-
-  /* Reset all I2C2 registers */
-  I2C_SoftwareResetCmd(I2C1, ENABLE);
-  I2C_SoftwareResetCmd(I2C1, DISABLE);
-
-  /* Configure the I2C peripheral */
-  IOE_I2C_Config();
+{  
+  uint8_t tmp= 0;
+  uint8_t IOE_BufferRX[2] = {0x00, 0x00};  
+  
+  /* Configure DMA Peripheral */
+  IOE_DMA_Config(IOE_DMA_RX, (uint8_t*)IOE_BufferRX);
+  
+  /* Enable DMA NACK automatic generation */
+  I2C_DMALastTransferCmd(IOE_I2C, ENABLE);
   
   /* Enable the I2C peripheral */
-  I2C_GenerateSTART(I2C1, ENABLE);
+  I2C_GenerateSTART(IOE_I2C, ENABLE);
   
-  /* Test on EV5 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) 
+  /* Test on SB Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_SB)) 
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
-   
+  
   /* Send device address for write */
-  I2C_Send7bitAddress(I2C1, DeviceAddr, I2C_Direction_Transmitter);
+  I2C_Send7bitAddress(IOE_I2C, DeviceAddr, I2C_Direction_Transmitter);
   
-  /* Test on EV6 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))  
+  /* Test on ADDR Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
-  
-  /* Clear EV6 by setting again the PE bit */
-  I2C_Cmd(I2C1, ENABLE);
   
   /* Send the device's internal address to write to */
-  I2C_SendData(I2C1, RegisterAddr);  
+  I2C_SendData(IOE_I2C, RegisterAddr);  
   
-  /* Test on EV8 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) 
+  /* Test on TXE FLag (data dent) */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while ((!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_BTF)))  
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
   
-  /* Send STRAT condition a second time */  
-  I2C_GenerateSTART(I2C1, ENABLE);
+  /* Send START condition a second time */  
+  I2C_GenerateSTART(IOE_I2C, ENABLE);
   
-  /* Test on EV5 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) 
+  /* Test on SB Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_GetFlagStatus(IOE_I2C,I2C_FLAG_SB)) 
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
   
   /* Send IOExpander address for read */
-  I2C_Send7bitAddress(I2C1, DeviceAddr, I2C_Direction_Receiver);
+  I2C_Send7bitAddress(IOE_I2C, DeviceAddr, I2C_Direction_Receiver);
   
-  /* Test on EV6 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) 
+  /* Test on ADDR Flag */
+  IOE_TimeOut = TIMEOUT_MAX;
+  while (!I2C_CheckEvent(IOE_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))   
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
   }
-
-  /* Test on EV7 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED)) 
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(IOE_I2C,ENABLE);
+  
+  /* Enable DMA RX Channel */
+  DMA_Cmd(IOE_DMA_RX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  IOE_TimeOut = 2 * TIMEOUT_MAX;
+  while (!DMA_GetFlagStatus(IOE_DMA_RX_TCFLAG))
   {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
-  }
-    
-  /* Read the first byte from the IOExpander */
-  Buffer[1] = I2C_ReceiveData(I2C1);
-
-  /* Disable Acknowledgement */
-  I2C_AcknowledgeConfig(I2C1, DISABLE);
-     
+    if (IOE_TimeOut-- == 0) return(IOE_TimeoutUserCallback());
+  }        
+  
   /* Send STOP Condition */
-  I2C_GenerateSTOP(I2C1, ENABLE);
-
-  /* Test on EV7 and clear it */
-  TimeOut = TIMEOUT_MAX;
-  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED)) 
-  {
-    if (TimeOut-- == 0) return IOE_TIEMOUT;
-  }
+  I2C_GenerateSTOP(IOE_I2C, ENABLE);
   
-  /* Read the second byte from the IOExpander */
-  Buffer[0] = I2C_ReceiveData(I2C1);
-
-  /* Enable Acknowledgement to be ready for another reception */
-  I2C_AcknowledgeConfig(I2C1, ENABLE);
+  /* Disable DMA RX Channel */
+  DMA_Cmd(IOE_DMA_RX_CHANNEL, DISABLE);
   
-  /* return a pointer to the buffer */
-  return *(uint16_t *)Buffer;
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(IOE_I2C,DISABLE);
+  
+  /* Clear DMA RX Transfer Complete Flag */
+  DMA_ClearFlag(IOE_DMA_RX_TCFLAG);
+  
+  /* Reorganize received data */  
+  tmp = IOE_BufferRX[0];
+  IOE_BufferRX[0] = IOE_BufferRX[1];
+  IOE_BufferRX[1] = tmp;
+  
+  /* return a pointer to the IOE_Buffer */
+  return *(uint16_t *)IOE_BufferRX;  
 }
 
 /**
@@ -1436,6 +1462,65 @@ static void IOE_I2C_Config(void)
 }
 
 /**
+  * @brief  Configure the DMA Peripheral used to handle communication via I2C.
+  * @param  None
+  * @retval None
+  */
+
+static void IOE_DMA_Config(IOE_DMADirection_TypeDef Direction, uint8_t* buffer)
+{
+  DMA_InitTypeDef DMA_InitStructure;
+  
+  RCC_AHBPeriphClockCmd(IOE_DMA_CLK, ENABLE);
+  
+  /* Initialize the DMA_PeripheralBaseAddr member */
+  DMA_InitStructure.DMA_PeripheralBaseAddr = IOE_I2C_DR;
+  /* Initialize the DMA_MemoryBaseAddr member */
+  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)buffer;
+   /* Initialize the DMA_PeripheralInc member */
+  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+  /* Initialize the DMA_MemoryInc member */
+  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+  /* Initialize the DMA_PeripheralDataSize member */
+  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+  /* Initialize the DMA_MemoryDataSize member */
+  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+  /* Initialize the DMA_Mode member */
+  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+  /* Initialize the DMA_Priority member */
+  DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+  /* Initialize the DMA_M2M member */
+  DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+  
+  /* If using DMA for Reception */
+  if (Direction == IOE_DMA_RX)
+  {
+    /* Initialize the DMA_DIR member */
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
+    
+    /* Initialize the DMA_BufferSize member */
+    DMA_InitStructure.DMA_BufferSize = 2;
+    
+    DMA_DeInit(IOE_DMA_RX_CHANNEL);
+    
+    DMA_Init(IOE_DMA_RX_CHANNEL, &DMA_InitStructure);
+  }
+   /* If using DMA for Transmission */
+  else if (Direction == IOE_DMA_TX)
+  { 
+    /* Initialize the DMA_DIR member */
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+    
+    /* Initialize the DMA_BufferSize member */
+    DMA_InitStructure.DMA_BufferSize = 1;
+    
+    DMA_DeInit(IOE_DMA_TX_CHANNEL);
+    
+    DMA_Init(IOE_DMA_TX_CHANNEL, &DMA_InitStructure);
+  }
+}
+
+/**
   * @brief  Configures the IO expander Interrupt line and GPIO in EXTI mode.
   * @param  None        
   * @retval None
@@ -1506,4 +1591,4 @@ static void delay(__IO uint32_t nCount)
   * @}
   */ 
    
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

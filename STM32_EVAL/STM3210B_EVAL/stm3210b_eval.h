@@ -2,13 +2,13 @@
   ******************************************************************************
   * @file    stm3210b_eval.h
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file contains definitions for STM3210B_EVAL's Leds, push-buttons
   *          COM ports, SD Card (on SPI), sFLASH (on SPI) and Temperature sensor 
   *          LM75 (on I2C) hardware resources.
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -17,7 +17,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */ 
   
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -278,6 +279,13 @@
 #define LM75_I2C_SMBUSALERT_PIN          GPIO_Pin_5                  /* PB.05 */
 #define LM75_I2C_SMBUSALERT_GPIO_PORT    GPIOB                       /* GPIOB */
 #define LM75_I2C_SMBUSALERT_GPIO_CLK     RCC_APB2Periph_GPIOB
+#define LM75_I2C_DR                      ((uint32_t)0x40005410)
+
+#define LM75_DMA_CLK                     RCC_AHBPeriph_DMA1
+#define LM75_DMA_TX_CHANNEL              DMA1_Channel6
+#define LM75_DMA_RX_CHANNEL              DMA1_Channel7
+#define LM75_DMA_TX_TCFLAG               DMA1_FLAG_TC6
+#define LM75_DMA_RX_TCFLAG               DMA1_FLAG_TC7 
 
 /**
   * @}
@@ -336,4 +344,4 @@ void LM75_LowLevel_Init(void);
   * @}
   */    
 
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

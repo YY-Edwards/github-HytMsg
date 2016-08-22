@@ -2,12 +2,12 @@
   ******************************************************************************
   * @file    stm3210e_eval_fsmc_nand.h
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file contains all the functions prototypes for the 
   *          stm3210e_eval_fsmc_nand firmware driver.
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -16,7 +16,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */
    
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -84,7 +85,6 @@ typedef struct
 #define NAND_CMD_AREA_A            ((uint8_t)0x00)
 #define NAND_CMD_AREA_B            ((uint8_t)0x01)
 #define NAND_CMD_AREA_C            ((uint8_t)0x50)
-#define NAND_CMD_AREA_TRUE1        ((uint8_t)0x30)
 
 #define NAND_CMD_WRITE0            ((uint8_t)0x80)
 #define NAND_CMD_WRITE_TRUE1       ((uint8_t)0x10)
@@ -174,4 +174,4 @@ uint32_t NAND_AddressIncrement(NAND_ADDRESS* Address);
   * @}
   */ 
 
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

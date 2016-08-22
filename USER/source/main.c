@@ -1,8 +1,8 @@
 /*******************************************************************************
 * File Name       main.c
-* Anthor          WXJ     
-* Version         V1.00
-* Date            2013/7/30
+* Anthor          Edwards     
+* Version         V2.00
+* Date            2016/08/22
 * Description     --    
 *******************************************************************************/
 
@@ -31,6 +31,7 @@
 #define SYSTEM_CLOCK 72000000
 unsigned char ble_alive_flag = 0;
 unsigned char  ble_rx_counter = 0;
+unsigned char  Ble_send_flag = 0;
 
 int main ( void )
 {  
@@ -57,6 +58,14 @@ int main ( void )
         {
             ble_send(Msg);
         }
+        
+      if(Ble_send_flag)
+      {
+          Ble_send_flag = 0;
+        if(ble_alive_flag)printf("\r\n B_alive \r\n");
+        
+      }
+
     } 
     while(1);
       

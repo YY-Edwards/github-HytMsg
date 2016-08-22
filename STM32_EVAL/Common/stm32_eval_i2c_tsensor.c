@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32_eval_i2c_tsensor.c
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file provides a set of functions needed to manage the I2C LM75 
   *          temperature sensor mounted on STM32xx-EVAL board (refer to stm32_eval.h
   *          to know about the boards supporting this sensor). 
@@ -12,6 +12,12 @@
   *          GPIO) are defined in stm32xx_eval.h file, and the initialization is 
   *          performed in LM75_LowLevel_Init() function declared in stm32xx_eval.c 
   *          file.
+  *            
+  *          Note:
+  *          -----    
+  *          This driver uses the DMA method to send and receive data on I2C bus,
+  *          which allows higher efficiency and reliability  of the communication.
+  *                 
   *          You can easily tailor this driver to any other development board, 
   *          by just adapting the defines for hardware resources and 
   *          LM75_LowLevel_Init() function.
@@ -31,7 +37,7 @@
   *     | .                                     |   VDD     |    8  (3.3V)|
   *     +---------------------------------------+-----------+-------------+
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -40,7 +46,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */
 
 /* Includes ------------------------------------------------------------------*/
@@ -90,6 +97,8 @@
 /** @defgroup STM32_EVAL_I2C_TSENSOR_Private_Variables
   * @{
   */ 
+  
+__IO uint32_t  LM75_Timeout = LM75_LONG_TIMEOUT; 
 /**
   * @}
   */ 
@@ -97,6 +106,8 @@
 /** @defgroup STM32_EVAL_I2C_TSENSOR_Private_Function_Prototypes
   * @{
   */ 
+static void LM75_DMA_Config(LM75_DMADirection_TypeDef Direction, uint8_t* buffer, uint8_t NumData);
+
 /**
   * @}
   */ 
@@ -145,6 +156,67 @@ void LM75_Init(void)
   I2C_Cmd(LM75_I2C, ENABLE);
 }
 
+
+/**
+  * @brief  Configure the DMA Peripheral used to handle communication via I2C.
+  * @param  None
+  * @retval None
+  */
+
+static void LM75_DMA_Config(LM75_DMADirection_TypeDef Direction, uint8_t* buffer, uint8_t NumData)
+{
+  DMA_InitTypeDef DMA_InitStructure;
+  
+  RCC_AHBPeriphClockCmd(LM75_DMA_CLK, ENABLE);
+  
+  /* Initialize the DMA_PeripheralBaseAddr member */
+  DMA_InitStructure.DMA_PeripheralBaseAddr = LM75_I2C_DR;
+  /* Initialize the DMA_MemoryBaseAddr member */
+  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)buffer;
+   /* Initialize the DMA_PeripheralInc member */
+  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+  /* Initialize the DMA_MemoryInc member */
+  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+  /* Initialize the DMA_PeripheralDataSize member */
+  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+  /* Initialize the DMA_MemoryDataSize member */
+  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+  /* Initialize the DMA_Mode member */
+  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+  /* Initialize the DMA_Priority member */
+  DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+  /* Initialize the DMA_M2M member */
+  DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+  
+  /* If using DMA for Reception */
+  if (Direction == LM75_DMA_RX)
+  {
+    /* Initialize the DMA_DIR member */
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
+    
+    /* Initialize the DMA_BufferSize member */
+    DMA_InitStructure.DMA_BufferSize = NumData;
+    
+    DMA_DeInit(LM75_DMA_RX_CHANNEL);
+    
+    DMA_Init(LM75_DMA_RX_CHANNEL, &DMA_InitStructure);
+  }
+   /* If using DMA for Transmission */
+  else if (Direction == LM75_DMA_TX)
+  { 
+    /* Initialize the DMA_DIR member */
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+    
+    /* Initialize the DMA_BufferSize member */
+    DMA_InitStructure.DMA_BufferSize = NumData;
+    
+    DMA_DeInit(LM75_DMA_TX_CHANNEL);
+    
+    DMA_Init(LM75_DMA_TX_CHANNEL, &DMA_InitStructure);
+  }
+}
+
+
 /**
   * @brief  Checks the LM75 status.
   * @param  None
@@ -166,7 +238,7 @@ ErrorStatus LM75_GetStatus(void)
   I2C_GenerateSTART(LM75_I2C, ENABLE);
 
   /*!< Test on LM75_I2C EV5 and clear it */
-  while ((!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT)) && I2C_TimeOut)  /*!< EV5 */
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) && I2C_TimeOut)  /*!< EV5 */
   {
     I2C_TimeOut--;
   }
@@ -174,8 +246,8 @@ ErrorStatus LM75_GetStatus(void)
   {
     return ERROR;
   }
+  
   I2C_TimeOut = I2C_TIMEOUT;
-
 
   /*!< Send STLM75 slave address for write */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
@@ -204,78 +276,104 @@ ErrorStatus LM75_GetStatus(void)
   * @retval LM75 register value.
   */
 uint16_t LM75_ReadReg(uint8_t RegName)
-{
-  __IO uint16_t RegValue = 0;
-
-  /*!< Enable LM75_I2C acknowledgement if it is already disabled by other function */
-  I2C_AcknowledgeConfig(LM75_I2C, ENABLE);
-
-  /*--------------------------- Transmission Phase ----------------------------*/
-  /*!< Send LM75_I2C START condition */
-  I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on LM75_I2C EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+{   
+  uint8_t LM75_BufferRX[2] ={0,0};
+  uint16_t tmp = 0;    
+  
+   /* Test on BUSY Flag */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BUSY)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for write */
+  
+  /* Configure DMA Peripheral */
+  LM75_DMA_Config(LM75_DMA_RX, (uint8_t*)LM75_BufferRX, 2);  
+  
+  /* Enable DMA NACK automatic generation */
+  I2C_DMALastTransferCmd(LM75_I2C, ENABLE);
+  
+  /* Enable the I2C peripheral */
+  I2C_GenerateSTART(LM75_I2C, ENABLE);
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Send device address for write */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
-
-  /*!< Test on LM75_I2C EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send the specified register data pointer */
-  I2C_SendData(LM75_I2C, RegName);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+  
+  /* Send the device's internal address to write to */
+  I2C_SendData(LM75_I2C, RegName);  
+  
+  /* Test on TXE FLag (data sent) */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*------------------------------ Reception Phase ----------------------------*/
-  /*!< Send Re-STRAT condition */
+  
+  /* Send START condition a second time */  
   I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for read */
+  
+  /* Send LM75 address for read */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Receiver);
-
-  /*!< Test on EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))  /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))   
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Test on EV7 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_RECEIVED))  /*!< EV7 */
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(LM75_I2C,ENABLE);
+  
+  /* Enable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!DMA_GetFlagStatus(LM75_DMA_RX_TCFLAG))
   {
-  }
-
-  /*!< Store LM75_I2C received data */
-  RegValue = (uint16_t)(I2C_ReceiveData(LM75_I2C) << 8);
-
-  /*!< Disable LM75_I2C acknowledgement */
-  I2C_AcknowledgeConfig(LM75_I2C, DISABLE);
-
-  /*!< Send LM75_I2C STOP Condition */
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }        
+  
+  /* Send STOP Condition */
   I2C_GenerateSTOP(LM75_I2C, ENABLE);
-
-  /*!< Test on RXNE flag */
-  while (I2C_GetFlagStatus(LM75_I2C, I2C_FLAG_RXNE) == RESET)
-  {
-  }
-
+  
+  /* Disable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(LM75_I2C,DISABLE);
+  
+  /* Clear DMA RX Transfer Complete Flag */
+  DMA_ClearFlag(LM75_DMA_RX_TCFLAG);
+  
   /*!< Store LM75_I2C received data */
-  RegValue |= I2C_ReceiveData(LM75_I2C);
-
-  /*!< Return register value */
-  return (RegValue);
+  tmp = (uint16_t)(LM75_BufferRX[0] << 8);
+  tmp |= LM75_BufferRX[1];
+  
+  /* return a Reg value */
+  return (uint16_t)tmp;  
 }
 
 /**
@@ -287,51 +385,85 @@ uint16_t LM75_ReadReg(uint8_t RegName)
   * @param  RegValue: value to be written to LM75 register.  
   * @retval None
   */
-void LM75_WriteReg(uint8_t RegName, uint16_t RegValue)
-{
-  /*-------------------------------- Transmission Phase -----------------------*/
-  /*!< Send LM75_I2C START condition */
+uint8_t LM75_WriteReg(uint8_t RegName, uint16_t RegValue)
+{   
+  uint8_t LM75_BufferTX[2] ={0,0};
+  LM75_BufferTX[0] = (uint8_t)(RegValue >> 8);
+  LM75_BufferTX[1] = (uint8_t)(RegValue);
+  
+  /* Test on BUSY Flag */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BUSY)) 
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Configure DMA Peripheral */
+  LM75_DMA_Config(LM75_DMA_TX, (uint8_t*)LM75_BufferTX, 2);
+  
+  /* Enable the I2C peripheral */
   I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on LM75_I2C EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB) == RESET) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for write */
+  
+  /* Transmit the slave address and enable writing operation */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
-
-  /*!< Test on LM75_I2C EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send the specified register data pointer */
+  
+  /* Transmit the first address for r/w operations */
   I2C_SendData(LM75_I2C, RegName);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+  
+  /* Test on TXE FLag (data sent) */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send LM75_I2C data */
-  I2C_SendData(LM75_I2C, (uint8_t)(RegValue >> 8));
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(LM75_I2C,ENABLE);
+  
+  /* Enable DMA TX Channel */
+  DMA_Cmd(LM75_DMA_TX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!DMA_GetFlagStatus(LM75_DMA_TX_TCFLAG))
   {
-  }
-
-  /*!< Send LM75_I2C data */
-  I2C_SendData(LM75_I2C, (uint8_t)RegValue);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }  
+  
+  /* Wait until BTF Flag is set before generating STOP */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF))  
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send LM75_I2C STOP Condition */
+  
+  /* Send STOP Condition */
   I2C_GenerateSTOP(LM75_I2C, ENABLE);
+  
+  /* Disable DMA TX Channel */
+  DMA_Cmd(LM75_DMA_TX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(LM75_I2C,DISABLE);
+  
+  /* Clear DMA TX Transfer Complete Flag */
+  DMA_ClearFlag(LM75_DMA_TX_TCFLAG);
+  
+  return LM75_OK;
 }
 
 /**
@@ -340,78 +472,104 @@ void LM75_WriteReg(uint8_t RegName, uint16_t RegValue)
   * @retval LM75 measured temperature value.
   */
 uint16_t LM75_ReadTemp(void)
-{
-  __IO uint16_t RegValue = 0;
-
-  /*!< Enable LM75_I2C acknowledgement if it is already disabled by other function */
-  I2C_AcknowledgeConfig(LM75_I2C, ENABLE);
-
-  /*------------------------------------- Transmission Phase ------------------*/
-  /*!< Send LM75_I2C START condition */
-  I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on LM75_I2C EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+{   
+  uint8_t LM75_BufferRX[2] ={0,0};
+  uint16_t tmp = 0;
+  
+  /* Test on BUSY Flag */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BUSY)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for write */
+  
+  /* Configure DMA Peripheral */
+  LM75_DMA_Config(LM75_DMA_RX, (uint8_t*)LM75_BufferRX, 2);  
+  
+  /* Enable DMA NACK automatic generation */
+  I2C_DMALastTransferCmd(LM75_I2C, ENABLE);
+  
+  /* Enable the I2C peripheral */
+  I2C_GenerateSTART(LM75_I2C, ENABLE);
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Send device address for write */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
-
-  /*!< Test on LM75_I2C EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send the temperature register data pointer */
-  I2C_SendData(LM75_I2C, LM75_REG_TEMP);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+  
+  /* Send the device's internal address to write to */
+  I2C_SendData(LM75_I2C, LM75_REG_TEMP);  
+  
+  /* Test on TXE FLag (data sent) */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*-------------------------------- Reception Phase --------------------------*/
-  /*!< Send Re-STRAT condition */
+  
+  /* Send START condition a second time */  
   I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for read */
+  
+  /* Send LM75 address for read */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Receiver);
-
-  /*!< Test on EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))  /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))   
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Test on EV7 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_RECEIVED))  /*!< EV7 */
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(LM75_I2C,ENABLE);
+  
+  /* Enable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!DMA_GetFlagStatus(LM75_DMA_RX_TCFLAG))
   {
-  }
-
-  /*!< Store LM75_I2C received data */
-  RegValue = I2C_ReceiveData(LM75_I2C) << 8;
-
-  /*!< Disable LM75_I2C acknowledgement */
-  I2C_AcknowledgeConfig(LM75_I2C, DISABLE);
-
-  /*!< Send LM75_I2C STOP Condition */
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }        
+  
+  /* Send STOP Condition */
   I2C_GenerateSTOP(LM75_I2C, ENABLE);
-
-  /*!< Test on RXNE flag */
-  while (I2C_GetFlagStatus(LM75_I2C, I2C_FLAG_RXNE) == RESET)
-  {
-  }
-
+  
+  /* Disable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(LM75_I2C,DISABLE);
+  
+  /* Clear DMA RX Transfer Complete Flag */
+  DMA_ClearFlag(LM75_DMA_RX_TCFLAG);
+  
   /*!< Store LM75_I2C received data */
-  RegValue |= I2C_ReceiveData(LM75_I2C);
-
+  tmp = (uint16_t)(LM75_BufferRX[0] << 8);
+  tmp |= LM75_BufferRX[1];    
+  
   /*!< Return Temperature value */
-  return (RegValue >> 7);
+  return (uint16_t)(tmp >> 7);
 }
 
 /**
@@ -420,67 +578,99 @@ uint16_t LM75_ReadTemp(void)
   * @retval LM75 configuration register value.
   */
 uint8_t LM75_ReadConfReg(void)
-{
-  __IO uint8_t RegValue = 0;
-
-  /*!< Enable LM75_I2C acknowledgement if it is already disabled by other function */
-  I2C_AcknowledgeConfig(LM75_I2C, ENABLE);
-  /*----------------------------- Transmission Phase --------------------------*/
-  /*!< Send LM75_I2C START condition */
-  I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on LM75_I2C EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+{   
+  uint8_t LM75_BufferRX[2] ={0,0}; 
+  
+  /* Test on BUSY Flag */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BUSY)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for write */
+  
+  /* Configure DMA Peripheral */
+  LM75_DMA_Config(LM75_DMA_RX, (uint8_t*)LM75_BufferRX, 2);  
+  
+  /* Enable DMA NACK automatic generation */
+  I2C_DMALastTransferCmd(LM75_I2C, ENABLE);
+  
+  /* Enable the I2C peripheral */
+  I2C_GenerateSTART(LM75_I2C, ENABLE);
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Send device address for write */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
-
-  /*!< Test on LM75_I2C EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send the configuration register data pointer */
-  I2C_SendData(LM75_I2C, LM75_REG_CONF);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+  
+  /* Send the device's internal address to write to */
+  I2C_SendData(LM75_I2C, LM75_REG_CONF);  
+  
+  /* Test on TXE FLag (data sent) */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*----------------------------- Reception Phase -----------------------------*/
-  /*!< Send Re-STRAT condition */
+  
+  /* Send START condition a second time */  
   I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for read */
+  
+  /* Send LM75 address for read */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Receiver);
-
-  /*!< Test on EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))  /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))   
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Disable LM75_I2C acknowledgement */
-  I2C_AcknowledgeConfig(LM75_I2C, DISABLE);
-
-  /*!< Send LM75_I2C STOP Condition */
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(LM75_I2C,ENABLE);
+  
+  /* Enable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!DMA_GetFlagStatus(LM75_DMA_RX_TCFLAG))
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }        
+  
+  /* Send STOP Condition */
   I2C_GenerateSTOP(LM75_I2C, ENABLE);
-
-  /*!< Test on RXNE flag */
-  while (I2C_GetFlagStatus(LM75_I2C, I2C_FLAG_RXNE) == RESET);
-
-  /*!< Store LM75_I2C received data */
-  RegValue = I2C_ReceiveData(LM75_I2C);
-
-  /*!< Return configuration register value */
-  return (RegValue);
+  
+  /* Disable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(LM75_I2C,DISABLE);
+  
+  /* Clear DMA RX Transfer Complete Flag */
+  DMA_ClearFlag(LM75_DMA_RX_TCFLAG);
+  
+  /*!< Return Temperature value */
+  return (uint8_t)LM75_BufferRX[0];
 }
 
 /**
@@ -489,43 +679,85 @@ uint8_t LM75_ReadConfReg(void)
   *         register.
   * @retval None
   */
-void LM75_WriteConfReg(uint8_t RegValue)
-{
-  /*-------------------------------- Transmission Phase -----------------------*/
-  /*!< Send LM75_I2C START condition */
+uint8_t LM75_WriteConfReg(uint8_t RegValue)
+{   
+  uint8_t LM75_BufferTX = 0;  
+  LM75_BufferTX = (uint8_t)(RegValue);
+  
+  /* Test on BUSY Flag */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BUSY)) 
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Configure DMA Peripheral */
+  LM75_DMA_Config(LM75_DMA_TX, (uint8_t*)(&LM75_BufferTX), 1);
+  
+  /* Enable the I2C peripheral */
   I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on LM75_I2C EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB) == RESET) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for write */
+  
+  /* Transmit the slave address and enable writing operation */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
-
-  /*!< Test on LM75_I2C EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send the configuration register data pointer */
+  
+  /* Transmit the first address for r/w operations */
   I2C_SendData(LM75_I2C, LM75_REG_CONF);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+  
+  /* Test on TXE FLag (data sent) */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send LM75_I2C data */
-  I2C_SendData(LM75_I2C, RegValue);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(LM75_I2C,ENABLE);
+  
+  /* Enable DMA TX Channel */
+  DMA_Cmd(LM75_DMA_TX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!DMA_GetFlagStatus(LM75_DMA_TX_TCFLAG))
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }  
+  
+  /* Wait until BTF Flag is set before generating STOP */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send LM75_I2C STOP Condition */
+  
+  /* Send STOP Condition */
   I2C_GenerateSTOP(LM75_I2C, ENABLE);
+  
+  /* Disable DMA TX Channel */
+  DMA_Cmd(LM75_DMA_TX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(LM75_I2C,DISABLE);
+  
+  /* Clear DMA TX Transfer Complete Flag */
+  DMA_ClearFlag(LM75_DMA_TX_TCFLAG);  
+  
+  return LM75_OK;
+  
 }
 
 /**
@@ -534,109 +766,190 @@ void LM75_WriteConfReg(uint8_t RegValue)
   *         or DISABLE.  
   * @retval None
   */
-void LM75_ShutDown(FunctionalState NewState)
-{
-  __IO uint8_t RegValue = 0;
-
-  /*---------------------------- Transmission Phase ---------------------------*/
-  /*!< Send LM75_I2C START condition */
-  I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on LM75_I2C EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+uint8_t LM75_ShutDown(FunctionalState NewState)
+{   
+  uint8_t LM75_BufferRX[2] ={0,0};
+  uint8_t LM75_BufferTX = 0;
+  __IO uint8_t RegValue = 0;    
+  
+  /* Test on BUSY Flag */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BUSY)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for write */
+  
+  /* Configure DMA Peripheral */
+  LM75_DMA_Config(LM75_DMA_RX, (uint8_t*)LM75_BufferRX, 2);  
+  
+  /* Enable DMA NACK automatic generation */
+  I2C_DMALastTransferCmd(LM75_I2C, ENABLE);
+  
+  /* Enable the I2C peripheral */
+  I2C_GenerateSTART(LM75_I2C, ENABLE);
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Send device address for write */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
-
-  /*!< Test on LM75_I2C EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send the configuration register data pointer */
-  I2C_SendData(LM75_I2C, LM75_REG_CONF);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED))  /*!< EV8 */
+  
+  /* Send the device's internal address to write to */
+  I2C_SendData(LM75_I2C, LM75_REG_CONF);  
+  
+  /* Test on TXE FLag (data sent) */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*-------------------------------- Reception Phase --------------------------*/
-  /*!< Send Re-STRAT condition */
+  
+  /* Send START condition a second time */  
   I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send STLM75 slave address for read */
+  
+  /* Send LM75 address for read */
   I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Receiver);
-
-  /*!< Test on EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))  /*!< EV6 */
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))   
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Disable LM75_I2C acknowledgement */
-  I2C_AcknowledgeConfig(LM75_I2C, DISABLE);
-
-  /*!< Send LM75_I2C STOP Condition */
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(LM75_I2C,ENABLE);
+  
+  /* Enable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!DMA_GetFlagStatus(LM75_DMA_RX_TCFLAG))
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }        
+  
+  /* Send STOP Condition */
   I2C_GenerateSTOP(LM75_I2C, ENABLE);
-
-  /*!< Test on RXNE flag */
-  while (I2C_GetFlagStatus(LM75_I2C, I2C_FLAG_RXNE) == RESET);
-
-  /*!< Store LM75_I2C received data */
-  RegValue = I2C_ReceiveData(LM75_I2C);
-
-  /*------------------------------------ Transmission Phase -------------------*/
-  /*!< Send LM75_I2C START condition */
-  I2C_GenerateSTART(LM75_I2C, ENABLE);
-
-  /*!< Test on LM75_I2C EV5 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_MODE_SELECT))  /*!< EV5 */
-  {
-  }
-
-  /*!< Send STLM75 slave address for write */
-  I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
-
-  /*!< Test on LM75_I2C EV6 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) /*!< EV6 */
-  {
-  }
-
-  /*!< Send the configuration register data pointer */
-  I2C_SendData(LM75_I2C, LM75_REG_CONF);
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
-  {
-  }
-
+  
+  /* Disable DMA RX Channel */
+  DMA_Cmd(LM75_DMA_RX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(LM75_I2C,DISABLE);
+  
+  /* Clear DMA RX Transfer Complete Flag */
+  DMA_ClearFlag(LM75_DMA_RX_TCFLAG);
+  
+  /*!< Get received data */
+  RegValue = (uint8_t)LM75_BufferRX[0];
+  
+  /*---------------------------- Transmission Phase ---------------------------*/
+  
   /*!< Enable or disable SD bit */
   if (NewState != DISABLE)
   {
     /*!< Enable LM75 */
-    I2C_SendData(LM75_I2C, RegValue & LM75_SD_RESET);
+    LM75_BufferTX = RegValue & LM75_SD_RESET;
   }
   else
   {
     /*!< Disable LM75 */
-    I2C_SendData(LM75_I2C, RegValue | LM75_SD_SET);
-  }
-
-  /*!< Test on LM75_I2C EV8 and clear it */
-  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) /*!< EV8 */
+    LM75_BufferTX = RegValue | LM75_SD_SET;
+  }  
+  
+  /* Test on BUSY Flag */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BUSY)) 
   {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
   }
-
-  /*!< Send LM75_I2C STOP Condition */
+  
+  /* Configure DMA Peripheral */
+  LM75_DMA_Config(LM75_DMA_TX, (uint8_t*)(&LM75_BufferTX), 1);
+  
+  /* Enable the I2C peripheral */
+  I2C_GenerateSTART(LM75_I2C, ENABLE);
+  
+  /* Test on SB Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_SB) == RESET) 
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Transmit the slave address and enable writing operation */
+  I2C_Send7bitAddress(LM75_I2C, LM75_ADDR, I2C_Direction_Transmitter);
+  
+  /* Test on ADDR Flag */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while (!I2C_CheckEvent(LM75_I2C, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Transmit the first address for r/w operations */
+  I2C_SendData(LM75_I2C, LM75_REG_CONF);
+  
+  /* Test on TXE FLag (data sent) */
+  LM75_Timeout = LM75_FLAG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_TXE)) && (!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Enable I2C DMA request */
+  I2C_DMACmd(LM75_I2C,ENABLE);
+  
+  /* Enable DMA TX Channel */
+  DMA_Cmd(LM75_DMA_TX_CHANNEL, ENABLE);
+  
+  /* Wait until DMA Transfer Complete */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while (!DMA_GetFlagStatus(LM75_DMA_TX_TCFLAG))
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }  
+  
+  /* Wait until BTF Flag is set before generating STOP */
+  LM75_Timeout = LM75_LONG_TIMEOUT;
+  while ((!I2C_GetFlagStatus(LM75_I2C,I2C_FLAG_BTF)))  
+  {
+    if((LM75_Timeout--) == 0) return LM75_TIMEOUT_UserCallback();
+  }
+  
+  /* Send STOP Condition */
   I2C_GenerateSTOP(LM75_I2C, ENABLE);
-
+  
+  /* Disable DMA TX Channel */
+  DMA_Cmd(LM75_DMA_TX_CHANNEL, DISABLE);
+  
+  /* Disable I2C DMA request */  
+  I2C_DMACmd(LM75_I2C,DISABLE);
+  
+  /* Clear DMA TX Transfer Complete Flag */
+  DMA_ClearFlag(LM75_DMA_TX_TCFLAG);  
+  
+  return LM75_OK;
 }
 
 /**
@@ -661,4 +974,4 @@ void LM75_ShutDown(FunctionalState NewState)
   * @}
   */
 
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

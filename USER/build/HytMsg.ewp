@@ -65,7 +65,7 @@
         </option>
         <option>
           <name>OGCoreOrChip</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>GRuntimeLibSelect</name>
@@ -99,7 +99,7 @@
         </option>
         <option>
           <name>OGChipSelectEditMenu</name>
-          <state>STM32F103x8	ST STM32F103x8</state>
+          <state>STM32F103xB	ST STM32F103xB</state>
         </option>
         <option>
           <name>GenLowLevelInterface</name>
@@ -1898,12 +1898,6 @@
       <group>
         <name>startup</name>
         <file>
-          <name>$PROJ_DIR$\..\..\FWLIB\cmsis\startup\startup_stm32f10x_hd.s</name>
-          <excluded>
-            <configuration>Debug</configuration>
-          </excluded>
-        </file>
-        <file>
           <name>$PROJ_DIR$\..\..\FWLIB\cmsis\startup\startup_stm32f10x_md.s</name>
         </file>
       </group>
@@ -1918,6 +1912,9 @@
       <name>driver</name>
       <file>
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\misc.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_exti.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_flash.c</name>
@@ -1939,10 +1936,10 @@
   <group>
     <name>STM32_EVAL</name>
     <file>
-      <name>$PROJ_DIR$\..\..\STM32_EVAL\STM32100B_EVAL\stm32100b_eval_lcd.c</name>
+      <name>$PROJ_DIR$\..\..\STM32_EVAL\STM3210E_EVAL\stm3210e_eval.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\STM32_EVAL\stm32_eval.c</name>
+      <name>$PROJ_DIR$\..\..\STM32_EVAL\stm32_eval.h</name>
     </file>
   </group>
   <group>

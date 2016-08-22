@@ -1,10 +1,10 @@
-;/******************** (C) COPYRIGHT 2010 STMicroelectronics ********************
+;******************** (C) COPYRIGHT 2011 STMicroelectronics ********************
 ;* File Name          : startup_stm32f10x_md.s
 ;* Author             : MCD Application Team
-;* Version            : V3.3.0
-;* Date               : 04/16/2010
+;* Version            : V3.5.0
+;* Date               : 11-March-2011
 ;* Description        : STM32F10x Medium Density Devices vector table for 
-;*                      EWARM5.x toolchain.
+;*                      EWARM toolchain.
 ;*                      This module performs:
 ;*                      - Set the initial SP
 ;*                      - Configure the clock system
@@ -20,7 +20,7 @@
 ;* INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
 ;* CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
 ;* INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-;*******************************************************************************/
+;*******************************************************************************
 ;
 ;
 ; The modules in this file are included in the libraries, and may be replaced
@@ -46,15 +46,8 @@
         SECTION .intvec:CODE:NOROOT(2)
 
         EXTERN  __iar_program_start
-        EXTERN  SystemInit
-        
-            EXTERN  vPortSVCHandler           ;@
-    EXTERN  xPortPendSVHandler        ;@
-    EXTERN  xPortSysTickHandler       ;@
-    
+        EXTERN  SystemInit        
         PUBLIC  __vector_table
-        
-        
 
         DATA
 __vector_table
@@ -69,7 +62,7 @@ __vector_table
         DCD     0                         ; Reserved
         DCD     0                         ; Reserved
         DCD     0                         ; Reserved
-       DCD     SVC_Handler               ; SVCall Handler
+        DCD     SVC_Handler               ; SVCall Handler
         DCD     DebugMon_Handler          ; Debug Monitor Handler
         DCD     0                         ; Reserved
         DCD     PendSV_Handler            ; PendSV Handler
@@ -395,4 +388,4 @@ USBWakeUp_IRQHandler
         B USBWakeUp_IRQHandler
 
         END
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

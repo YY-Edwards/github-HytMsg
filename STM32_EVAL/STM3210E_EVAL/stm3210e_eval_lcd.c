@@ -2,13 +2,13 @@
   ******************************************************************************
   * @file    stm3210e_eval_lcd.c
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file includes the LCD driver for AM-240320L8TNQW00H 
   *          (LCD_ILI9320) and AM-240320LDTNQW00H (LCD_SPFD5408B) Liquid Crystal
   *          Display Module of STM3210E-EVAL board.
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -17,14 +17,12 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */ 
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm3210e_eval_lcd.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_fsmc.h"
-#include "stm32f10x_rcc.h"
 #include "../Common/fonts.c"
 
 /** @addtogroup Utilities
@@ -421,13 +419,12 @@ void LCD_Clear(uint16_t Color)
   * @param  Ypos: specifies the Y position. 
   * @retval None
   */
- #if 1
 void LCD_SetCursor(uint8_t Xpos, uint16_t Ypos)
 {
   LCD_WriteReg(LCD_REG_32, Xpos);
   LCD_WriteReg(LCD_REG_33, Ypos);
 }
- #endif
+
 
 /**
   * @brief  Draws a character on LCD.
@@ -1031,7 +1028,7 @@ void LCD_FillPolyLine(pPoint Points, uint16_t PointCount)
       j = i; 
     }
   
-    /* Sort the nodes, via a simple “Bubble” sort. */
+    /* Sort the nodes, via a simple "Bubble" sort. */
     i = 0;
     while (i < nodes-1) 
     {
@@ -1081,7 +1078,7 @@ void LCD_FillPolyLine(pPoint Points, uint16_t PointCount)
   /* draw the edges */
   LCD_SetTextColor(TextColor);
 }
-#if 1
+
 /**
   * @brief  Writes to the selected LCD register.
   * @param  LCD_Reg: address of the selected register.
@@ -1146,7 +1143,7 @@ uint16_t LCD_ReadRAM(void)
   /* Read 16-bit Reg */
   return LCD->LCD_RAM;
 }
-#endif
+
 
 /**
   * @brief  Power on the LCD.
@@ -1202,7 +1199,6 @@ void LCD_DisplayOff(void)
   * @param  None
   * @retval None
   */
-  #if 1
 void LCD_CtrlLinesConfig(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
@@ -1266,6 +1262,7 @@ void LCD_FSMCConfig(void)
   FSMC_NORSRAMInitStructure.FSMC_MemoryType = FSMC_MemoryType_SRAM;
   FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;
   FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode = FSMC_BurstAccessMode_Disable;
+  FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait = FSMC_AsynchronousWait_Disable;  
   FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
   FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;
   FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;
@@ -1279,7 +1276,7 @@ void LCD_FSMCConfig(void)
   /* BANK 4 (of NOR/SRAM Bank 1~4) is enabled */
   FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM4, ENABLE);
 }
- #endif
+
 /**
   * @brief  Displays a pixel.
   * @param  x: pixel x.
@@ -1329,4 +1326,4 @@ static void delay(vu32 nCount)
   * @}
   */  
 
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

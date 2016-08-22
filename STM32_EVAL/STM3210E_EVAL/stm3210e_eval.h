@@ -2,13 +2,13 @@
   ******************************************************************************
   * @file    stm3210e_eval.h
   * @author  MCD Application Team
-  * @version V4.2.0
-  * @date    04/16/2010
+  * @version V4.5.0
+  * @date    07-March-2011
   * @brief   This file contains definitions for STM3210E_EVAL's Leds, push-buttons
   *          COM ports, sFLASH (on SPI) and Temperature Sensor LM75 (on I2C)
   *          hardware resources.  
   ******************************************************************************
-  * @copy
+  * @attention
   *
   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
@@ -17,7 +17,8 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2010 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************  
   */ 
   
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -30,7 +31,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32_eval.h"
-#include "stm32f10x_usart.h"
 
 /** @addtogroup Utilities
   * @{
@@ -62,7 +62,6 @@
   * @{
   */
 #define LEDn                             4
-#define GPIO_LED                         GPIOF  
 
 #define LED1_PIN                         GPIO_Pin_6
 #define LED1_GPIO_PORT                   GPIOF
@@ -79,7 +78,6 @@
 #define LED4_PIN                         GPIO_Pin_9
 #define LED4_GPIO_PORT                   GPIOF
 #define LED4_GPIO_CLK                    RCC_APB2Periph_GPIOF
-
 
 /**
   * @}
@@ -177,12 +175,11 @@
 /** @addtogroup STM3210E_EVAL_LOW_LEVEL_COM
   * @{
   */
-#define COMn                             2
+#define COMn                             3
 
 /**
  * @brief Definition for COM port1, connected to USART1
  */ 
-#define EVAL_COM1_STR                    "USART1"
 #define EVAL_COM1                        USART1
 #define EVAL_COM1_CLK                    RCC_APB2Periph_USART1
 #define EVAL_COM1_TX_PIN                 GPIO_Pin_9
@@ -196,7 +193,6 @@
 /**
  * @brief Definition for COM port2, connected to USART2
  */ 
-#define EVAL_COM2_STR                    "USART2"
 #define EVAL_COM2                        USART2
 #define EVAL_COM2_CLK                    RCC_APB1Periph_USART2
 #define EVAL_COM2_TX_PIN                 GPIO_Pin_2
@@ -207,6 +203,20 @@
 #define EVAL_COM2_RX_GPIO_CLK            RCC_APB2Periph_GPIOA
 #define EVAL_COM2_IRQn                   USART2_IRQn
 
+/**
+ * @brief Definition for COM port3, connected to USART3
+ */ 
+#define EVAL_COM3                        USART3
+#define EVAL_COM3_CLK                    RCC_APB1Periph_USART3
+#define EVAL_COM3_TX_PIN                 GPIO_Pin_10
+#define EVAL_COM3_TX_GPIO_PORT           GPIOB
+#define EVAL_COM3_TX_GPIO_CLK            RCC_APB2Periph_GPIOB
+#define EVAL_COM3_RX_PIN                 GPIO_Pin_11
+#define EVAL_COM3_RX_GPIO_PORT           GPIOB
+#define EVAL_COM3_RX_GPIO_CLK            RCC_APB2Periph_GPIOB
+#define EVAL_COM3_IRQn                   USART3_IRQn   
+   
+   
 /**
   * @}
   */ 
@@ -230,7 +240,7 @@
 /** 
   * @brief  SDIO Data Transfer Frequency (25MHz max) 
   */
-#define SDIO_TRANSFER_CLK_DIV            ((uint8_t)0x1) 
+#define SDIO_TRANSFER_CLK_DIV            ((uint8_t)0x00) 
 
 /**
   * @}
@@ -278,7 +288,13 @@
 #define LM75_I2C_SMBUSALERT_PIN          GPIO_Pin_5                  /* PB.05 */
 #define LM75_I2C_SMBUSALERT_GPIO_PORT    GPIOB                       /* GPIOB */
 #define LM75_I2C_SMBUSALERT_GPIO_CLK     RCC_APB2Periph_GPIOB
+#define LM75_I2C_DR                      ((uint32_t)0x40005410)
 
+#define LM75_DMA_CLK                     RCC_AHBPeriph_DMA1
+#define LM75_DMA_TX_CHANNEL              DMA1_Channel6
+#define LM75_DMA_RX_CHANNEL              DMA1_Channel7
+#define LM75_DMA_TX_TCFLAG               DMA1_FLAG_TC6
+#define LM75_DMA_RX_TCFLAG               DMA1_FLAG_TC7
 /**
   * @}
   */
@@ -308,7 +324,7 @@ void SD_LowLevel_DeInit(void);
 void SD_LowLevel_Init(void); 
 void SD_LowLevel_DMA_TxConfig(uint32_t *BufferSRC, uint32_t BufferSize);
 void SD_LowLevel_DMA_RxConfig(uint32_t *BufferDST, uint32_t BufferSize);
-void SD_WaitForDMAEndOfTransfer(void);
+uint32_t SD_DMAEndOfTransferStatus(void);
 void sFLASH_LowLevel_DeInit(void);
 void sFLASH_LowLevel_Init(void); 
 void LM75_LowLevel_DeInit(void);
@@ -337,4 +353,4 @@ void LM75_LowLevel_Init(void);
   * @}
   */
   
-/******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
