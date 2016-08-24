@@ -32,6 +32,7 @@
 unsigned char ble_alive_flag = 0;
 unsigned char  ble_rx_counter = 0;
 unsigned char  Ble_send_flag = 0;
+unsigned char Ble_alive_counter = 0;
 
 int main ( void )
 {  
@@ -62,7 +63,8 @@ int main ( void )
       if(Ble_send_flag)
       {
           Ble_send_flag = 0;
-        if(ble_alive_flag)printf("\r\n B_alive \r\n");
+          Ble_alive_counter++;
+          if(ble_alive_flag)printf("\r\n B_alive:%d \r\n", Ble_alive_counter);
         
       }
 

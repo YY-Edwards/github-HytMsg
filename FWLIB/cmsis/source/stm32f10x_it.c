@@ -213,7 +213,7 @@ void Clear400msDelay(void )
    Delay400ms=0;
 }
 
-unsigned char test[1000];
+//unsigned char test[1000];
 unsigned short index;
 
 
@@ -234,7 +234,7 @@ void USART1_IRQHandler(void)
         
        unsigned char ch = USART_ReceiveData(USART1);  
        QueuePush(UsartRxQue, &ch);  
-       test[index] = ch;
+       //test[index] = ch;
        index = (index + 1 >= 1000 ) ?0:( index + 1);
        
     }

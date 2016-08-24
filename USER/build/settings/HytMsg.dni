@@ -1,5 +1,5 @@
 [DebugChecksum]
-Checksum=911752538
+Checksum=1401634715
 [Stack]
 FillEnabled=0
 OverflowWarningsEnabled=1
@@ -56,17 +56,6 @@ Fmt8={W}0:temp_2	4	0
 Fmt9={W}1:SrcIP	4	0
 Fmt10={W}1:Sumofdata	4	0
 Fmt11={W}1:ts	4	0
-[Disassemble mode]
-mode=0
-[Breakpoints2]
-Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.39.4" 0 0 1 "" 0 "" 0
-Bp1=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.264.5" 0 0 1 "" 0 "" 0
-Bp2=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.316.5" 0 0 1 "" 0 "" 0
-Bp3=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\bluetooth.c}.112.6" 0 0 1 "" 0 "" 0
-Bp4=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.298.5" 0 0 1 "" 0 "" 0
-Bp5=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\main.c}.57.9" 0 0 1 "" 0 "" 0
-Bp6=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\main.c}.40.5" 0 0 1 "" 0 "" 0
-Count=7
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -74,9 +63,6 @@ Category=_ 0
 [TermIOLog]
 LoggingEnabled=_ 0
 LogFile=_ ""
-[Aliases]
-Count=0
-SuppressDialog=0
 [CallStackLog]
 Enabled=0
 [DriverProfiling]
@@ -85,3 +71,17 @@ Mode=0
 Graph=0
 Symbiont=0
 Exclusions=
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.39.4" 0 0 1 "" 0 "" 0
+Bp1=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.264.5" 0 0 1 "" 0 "" 0
+Bp2=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.316.5" 0 0 1 "" 0 "" 0
+Bp3=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\bluetooth.c}.112.6" 0 0 1 "" 0 "" 0
+Bp4=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.298.5" 0 0 1 "" 0 "" 0
+Bp5=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\main.c}.58.9" 0 0 1 "" 0 "" 0
+Bp6=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\main.c}.41.5" 0 0 1 "" 0 "" 0
+Count=7
+[Aliases]
+Count=0
+SuppressDialog=0
