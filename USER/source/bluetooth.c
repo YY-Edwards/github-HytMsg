@@ -67,7 +67,7 @@ void ble_init(void)
     gpio_ble_init();
     usart_ble_init();
     
-    BluetoothRxQue = QueueCreate(150, 1); 
+    BluetoothRxQue = QueueCreate(80, 1); //这里分配的时候需注意
 }
 
 
