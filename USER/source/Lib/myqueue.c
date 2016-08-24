@@ -79,10 +79,20 @@ QueueSta_t QueuePush(Queue_t queue, void * element)
        cur = (queue->rear + 1 >= queue->deep) ? 0 : (queue->rear + 1);
     }
     
+    
     memcpy(queue->store + queue->elementsize * cur, element, queue->elementsize);
     
     queue->rear = cur;
     queue->count += 1;
+    
+    if(queue->count >= queue->deep)
+    {
+       return queue_full;
+       //queue->count = 0;
+       printf("qxxxqqqqq\r\n");
+        //queue->count = 0;
+    }
+    
     return queue_ok;
 }
 

@@ -1,8 +1,8 @@
 #include "radio/physical.h"
 
 
-Queue_t UsartTxQue = NULL;
-Queue_t UsartRxQue = NULL;
+ Queue_t UsartTxQue = NULL;
+ Queue_t UsartRxQue = NULL;
 
 unsigned short DelayNmsCounter = 0;
 

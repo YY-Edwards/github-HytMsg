@@ -235,7 +235,7 @@ void USART1_IRQHandler(void)
        unsigned char ch = USART_ReceiveData(USART1);  
        QueuePush(UsartRxQue, &ch);  
        //test[index] = ch;
-       index = (index + 1 >= 1000 ) ?0:( index + 1);
+       //index = (index + 1 >= 1000 ) ?0:( index + 1);
        
     }
     

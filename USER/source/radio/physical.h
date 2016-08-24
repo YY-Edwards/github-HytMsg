@@ -24,7 +24,7 @@
 #define USART1_IRQHandler        USART1_IRQHandler
 
 
-#define MAX_TX_DEEP 512
+#define MAX_TX_DEEP 256
 #define MAX_RX_DEEP 512
 
 extern Queue_t UsartTxQue;

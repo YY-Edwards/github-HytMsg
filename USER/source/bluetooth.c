@@ -67,7 +67,7 @@ void ble_init(void)
     gpio_ble_init();
     usart_ble_init();
     
-    BluetoothRxQue = QueueCreate(64, 1); 
+    BluetoothRxQue = QueueCreate(150, 1); 
 }
 
 
@@ -76,7 +76,7 @@ void ble_init(void)
 unsigned char ble_receive(Message_t * msg)
 {
    unsigned char * p = (unsigned char *)msg;
-   unsigned char Counter = 6;
+   static unsigned char Counter = 0;
    
    if(queue_ok != QueuePull(BluetoothRxQue, p++))
    {
@@ -107,9 +107,11 @@ unsigned char ble_receive(Message_t * msg)
    
    if( sizeof(MessageHeader_t) + 2 <= Counter)
    {
-     
+     //收到的数据超过协议最大数据包长度（68bytes）也是可以通过的
      //if((Counter >= sizeof(MessageHeader_t) + msg->Header.Length + 2) && (Msg_Header == htons(msg->Header.Header)) )
-     if((Msg_Header == htons(msg->Header.Header)))
+     
+     if((Counter <= sizeof(Message_t)) && (Msg_Header == htons(msg->Header.Header)) )
+     //if((Msg_Header == htons(msg->Header.Header)))
       {
             
             switch(msg->Header.Opcode)
@@ -123,7 +125,7 @@ unsigned char ble_receive(Message_t * msg)
                       if(htons(rxcheck))
                       {
                           ble_rx_counter =0;
-                        
+                          Counter = 0;
                           ble_send_ack(MSG_ACK);
                           return SUCCESS;//成功
                       }
@@ -158,15 +160,28 @@ unsigned char ble_receive(Message_t * msg)
       }
      else
       {
-         printf("\r\n  MSG_NACK_1  \r\n"); 
+        if(Counter > sizeof(Message_t))printf("\r\n  Packge_length_Over  \r\n"); 
+        else
+         printf("\r\n  Error Packge  \r\n"); 
+        
+        ble_rx_counter =0;
+        Counter = 0;
+        QueueClear(BluetoothRxQue);
         ble_send_ack(MSG_NACK);
+        
       }
      
    }
   else if(0 <= Counter <= 3)
    {
+     printf("\r\n  Error Data  \r\n");
      printf("\r\n  MSG_NACK_2  \r\n"); 
+     
+     ble_rx_counter =0;
+     Counter = 0;
+     //QueueClear(BluetoothRxQue);
      ble_send_ack(MSG_NACK);
+     
     }
 //   else
 //   {
