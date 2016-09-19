@@ -277,8 +277,15 @@ void PrivateMessage_trans(void * p)
 
     req->RequestID = htonl(req_id++);
     //req->DestIP = htonl(ID2IP(msg->Header.Address));
-    req->DestIP = htonl(ID2IP(2));
-    req->SrcIP = htonl(ID2IP(1));//need to change;设置为自动获取
+    //req->DestIP = htonl(ID2IP(2));
+    
+    req->DestIP = htonl(ID2IP(1));
+    
+    printf("[RECEIVE BLE MSG AND SEND TO RADIO %x]\r\n", req->DestIP); 
+    
+    //req->SrcIP = htonl(ID2IP(1));//need to change;设置为自动获取
+    req->SrcIP = htonl(ID2IP(2));
+    
     
     memcpy(req->TMData, msg->Payload, msg->Header.Length);
     
@@ -368,7 +375,9 @@ void PrivateMessage_rec(void * hdpep)
         PrivateMessage_sendack(rec);
     } 
     
-    printf("[RECEIVE PRIVATE MSG FORM RADIO %d]\r\n", IP2ID(rec->SrcIP)); 
+    printf("[1.RECEIVE PRIVATE MSG FORM RADIO %d]\r\n", IP2ID(rec->SrcIP)); 
+    
+    printf("[2.AND SEND MSG TO BLE]\r\n");
     
     //直接发的是纯数据信息，没有相关的长度之类的结构。
    // msg_receive_event(rec->TMData); 

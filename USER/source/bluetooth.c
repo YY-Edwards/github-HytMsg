@@ -4,8 +4,10 @@ Queue_t BluetoothRxQue = NULL;
 
 static void rcc_ble_init(void)
 {
-    RCC_APB2PeriphClockCmd(USART2_GPIO_CLK , ENABLE);
+    RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
     RCC_APB1PeriphClockCmd(USART2_CLK, ENABLE);
+    
+    
 }
 
 static void nvic_ble_init(void)
@@ -37,6 +39,23 @@ static void gpio_ble_init(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
     
     GPIO_Init(USART2_GPIO, &GPIO_InitStructure);
+    
+    
+    /* Configure BLE_WKUP(PB9) and BLE_RESET(PB14) as alternate function push-pull */
+    GPIO_InitStructure.GPIO_Pin = BLE_ResetPin | BLE_WkupPin ;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    
+    GPIO_Init(BLE_GPIO, &GPIO_InitStructure);
+    
+    GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
+    delaynms(200);//延时200ms
+    GPIO_SetBits(BLE_GPIO, BLE_ResetPin);//拉高BLE的复位脚:1
+    
+
+    GPIO_ResetBits(BLE_GPIO, BLE_WkupPin);//唤醒BLE:0
+        
+    
 }
 
 
@@ -68,6 +87,9 @@ void ble_init(void)
     usart_ble_init();
     
     BluetoothRxQue = QueueCreate(80, 1); //这里分配的时候需注意
+    
+    printf("\r\n  BLE_Interface Configuration Completed  \r\n");
+    
 }
 
 

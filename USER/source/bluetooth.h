@@ -15,6 +15,11 @@
 #define USART2_IRQn              USART2_IRQn
 #define USART2_IRQHandler        USART2_IRQHandler
 
+#define BLE_ResetPin             GPIO_Pin_14
+#define BLE_WkupPin              GPIO_Pin_9
+#define BLE_GPIO                 GPIOB
+#define BLE_GPIO_CLK             RCC_APB2Periph_GPIOB
+
 
 extern Queue_t BluetoothRxQue;
 
