@@ -277,14 +277,14 @@ void PrivateMessage_trans(void * p)
 
     req->RequestID = htonl(req_id++);
     //req->DestIP = htonl(ID2IP(msg->Header.Address));
-    //req->DestIP = htonl(ID2IP(2));
+    req->DestIP = htonl(ID2IP(2));
     
-    req->DestIP = htonl(ID2IP(1));
+    //req->DestIP = htonl(ID2IP(1));
     
     printf("[RECEIVE BLE MSG AND SEND TO RADIO %x]\r\n", req->DestIP); 
     
-    //req->SrcIP = htonl(ID2IP(1));//need to change;设置为自动获取
-    req->SrcIP = htonl(ID2IP(2));
+    req->SrcIP = htonl(ID2IP(1));//need to change;设置为自动获取
+    //req->SrcIP = htonl(ID2IP(2));
     
     
     memcpy(req->TMData, msg->Payload, msg->Header.Length);
