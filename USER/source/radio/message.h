@@ -2,6 +2,7 @@
 #define _MESSAGE_H_
 
 #include "radio/hdpep.h"
+#include "radio/hdtap.h"
 #include "log/log.h"
 #include "app.h"
 

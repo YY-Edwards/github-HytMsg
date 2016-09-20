@@ -29,6 +29,8 @@
 *******************************************************************************/
 
 #define SYSTEM_CLOCK 72000000
+
+
 unsigned char ble_alive_flag = 0;
 unsigned char  ble_rx_counter = 0;
 unsigned char  Ble_send_flag = 0;

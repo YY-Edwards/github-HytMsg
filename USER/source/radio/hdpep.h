@@ -61,12 +61,12 @@ typedef union
     OpcodeStruct_t Struct;
     OpcodeTMS_t TMS;
     unsigned short Store;
-}HdepeOpcode_t;
+}HdpepOpcode_t;
 
 typedef struct
 {
     unsigned char MshHdr;
-    HdepeOpcode_t Opcode;
+    HdpepOpcode_t Opcode;
     unsigned short Length;  
 }HdpepHeader_t;
 

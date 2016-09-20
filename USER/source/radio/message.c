@@ -31,11 +31,19 @@ void msg_receive_event(void * msg)
 
 void msg_send( Message_t * msg)
 {
-    if(msg->Header.Address == 0xFFBA)GroupMessage_trans(msg);
+    
+#ifdef TRUNKING_MODE
+  
+  MessageSendingRequest(msg);
+
+#else
+  
+  if(msg->Header.Address == 0xFFBA)GroupMessage_trans(msg);
     else//peer to peer
       PrivateMessage_trans(msg);
     
-    
+  
+#endif
     
 }
 

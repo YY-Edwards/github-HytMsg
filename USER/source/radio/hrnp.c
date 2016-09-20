@@ -143,12 +143,21 @@ unsigned char hrnp_receive(Hrnp_t * hrnp)
         else if(HRNP_DATA == hrnp->Header.Opcode)
         {
             hrnp_data_ack(hrnp);
+            
         }
         else
         {
           //other Opcode
           printf("OB-R-Hrnp_Opcode:%x\r\n", hrnp->Header.Opcode);
-        
+          //Mater answer to a HRNP_DATA_ACK packet
+          if(hrnp->Header.Opcode == HRNP_DATA_ACK)
+          {
+            
+            ;//ACK_NotRequired, so no ACK 
+          
+          }
+          
+         
         }
 
         return SUCCESS;

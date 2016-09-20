@@ -263,8 +263,8 @@ void PrivateMessage_trans(void * p)
     
     req->Header.MshHdr = HDPEP_TMP;//0x09
     
-    HdepeOpcode_t op;
-    op.TMS.Ack = ACK_NotRequired;
+    HdpepOpcode_t op;
+    op.TMS.Ack = ACK_NotRequired;//²»ÐèÒªACK
     op.TMS.Option = Disable_OptionFiels;
     op.TMS.Opcode = PrivateMessageTransmission;      
     req->Header.Opcode.Store = htons(op.Store);//0x00A1
@@ -343,7 +343,7 @@ void PrivateMessage_sendack(void * p)
     
     ack->Header.MshHdr = HDPEP_TMP;
     
-    HdepeOpcode_t op;
+    HdpepOpcode_t op;
     op.TMS.Ack = ACK_NotRequired;
     op.TMS.Option = Disable_OptionFiels;
     op.TMS.Opcode = PrivateMessageAck;      
@@ -447,7 +447,7 @@ void GroupMessage_trans(void * p)
     
     req->Header.MshHdr = HDPEP_TMP;
     
-    HdepeOpcode_t op;
+    HdpepOpcode_t op;
     op.TMS.Ack = ACK_NotRequired;
     op.TMS.Option = Disable_OptionFiels;
     op.TMS.Opcode = GroupMessageTransmission;      
@@ -489,7 +489,7 @@ void GroupMessage_sendack(void * p)
     
     ack->Header.MshHdr = HDPEP_TMP;
     
-    HdepeOpcode_t op;
+    HdpepOpcode_t op;
     op.TMS.Ack = ACK_NotRequired;
     op.TMS.Option = Disable_OptionFiels;
     op.TMS.Opcode = GroupMessageAck;      

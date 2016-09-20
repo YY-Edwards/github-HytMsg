@@ -1977,6 +1977,12 @@
         <name>$PROJ_DIR$\..\source\radio\hdpep.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\source\radio\hdtap.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\source\radio\hdtap.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\source\radio\hrnp.c</name>
       </file>
       <file>
