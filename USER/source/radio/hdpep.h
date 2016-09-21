@@ -254,5 +254,9 @@ static const HdpepExe_t HdpepExeList[MAX_HDPEP_EXE_LIST] =
   {PrivateMessageAck, PrivateMessage_ack},
   {REPLY(TextMessageNotification),TextMessageNotification_reply},
   {PrivateMessageTransmission,PrivateMessage_rec},//注意，这里调用准备向蓝牙发送收到的短消息
+  
+  
 };
 #endif
+
+

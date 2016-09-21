@@ -132,7 +132,7 @@ unsigned char ble_receive(Message_t * msg)
      //收到的数据超过协议最大数据包长度（68bytes）也是可以通过的
      //if((Counter >= sizeof(MessageHeader_t) + msg->Header.Length + 2) && (Msg_Header == htons(msg->Header.Header)) )
      
-     if((Counter <= sizeof(Message_t)) && (Msg_Header == htons(msg->Header.Header)) )
+     if((Counter <= sizeof(Message_t)) && (Msg_Header == htons(msg->Header.Header)) )//可能是双字节数据：低位在前，高位在后。即BLE发送0xfffe，即OB板先收到0xfe,然后收到0xff.因此需要大小端转换
      //if((Msg_Header == htons(msg->Header.Header)))
       {
             

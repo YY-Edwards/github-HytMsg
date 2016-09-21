@@ -14,8 +14,8 @@ void MessageSendingRequest(void * p)
    
     HdtapOpcode_t op;
     
-    op.DTBS.H_Opcode = 0x0c;
     op.DTBS.L_Opcode = 0x08;
+    op.DTBS.H_Opcode = 0x0c;
     
     req->Header.Opcode.Store = op.Store;//0x0c08
        
@@ -23,6 +23,7 @@ void MessageSendingRequest(void * p)
     else
       req->Header.Length = (msg->Header.Length + 8);//TargetID[4]+CallType[1]+Option[1]+Datalen[2]+Msg[Datalen]
     
+    /**Target radio ID (air interface value) which a message to be sent to**/
     req->TargetID = ID2IP(2);
     //req->DestIP = htonl(ID2IP(msg->Header.Address));
     
@@ -50,7 +51,7 @@ void MessageSendingRequest(void * p)
           
           }
     
-    //memset(&(req->TMData[msg->Header.Length]), 0x00, 512-msg->Header.Length);//TMData未用的部分清零。
+    memset(&(req->TMData[msg->Header.Length]), 0x00, 512-msg->Header.Length);//TMData未用的部分清零。
 
   
     //注意地址
@@ -58,9 +59,8 @@ void MessageSendingRequest(void * p)
     req->End.MsgEnd = MSH_END;
       
     //协议结构处理,将checksum 和msgend 贴在TMData的末尾以便传输。
-      
-      //req->TMData[msg->Header.Length] =  req->End.Checksum; 
-      //req->TMData[msg->Header.Length+1] =  req->End.MsgEnd; 
+      req->TMData[msg->Header.Length] =  req->End.Checksum; 
+      req->TMData[msg->Header.Length+1] =  req->End.MsgEnd; 
       
     //HdtapEnd_t * end = (HdtapEnd_t *)((unsigned char *)req + sizeof(HdtapHeader_t) + msg->Header.Length);
     
@@ -73,3 +73,69 @@ void MessageSendingRequest(void * p)
 
 
 }
+
+unsigned char hdtap_receive(void *hdtap)
+{
+    Hrnp_t hrnp;
+    if(SUCCESS == hrnp_receive(&hrnp))
+    {
+        //save reg hdtap
+        if(hrnp.Header.Length >= sizeof(HrnpHeader_t) + sizeof(HdtapHeader_t) +sizeof(HdtapEnd_t))
+        {
+            HdtapHeader_t * ptr = (HdtapHeader_t *)hrnp.Payload.Data;//hdtap-header结构指向
+         
+            //把剩下的数据部分贴在hedep-header结构的后面
+            memcpy(hdtap, hrnp.Payload.Data, hrnp.Header.Length - sizeof(HrnpHeader_t));
+            return SUCCESS;
+        }
+    }
+    
+    return FAILURE;
+}
+
+
+void hdtap_exe( void * hdtap)
+{
+    HdtapHeader_t * ptr = (HdtapHeader_t *)hdtap;
+    
+    printf("receive hdtap:[ 0x%04X ]\r\n", ptr->Opcode.Store);
+    
+    for(int i = 0; i < MAX_HDTAP_EXE_LIST; i++)
+    {
+        if((ptr->Opcode.Store & 0xFFF) == (HdtapExeList[i].Opcode & 0xFFF) )
+        {
+            HdtapExeList[i].HdtapFunc(ptr);
+            break;
+        }
+    } 
+    
+}
+
+void MessageSending_reply(void * hdtap)
+{
+    MessageSending_reply_t * reply = (MessageSending_reply_t * )hdtap;
+    
+    printf("reply->Result:0x%x\r\n", reply->Result);
+    
+    if(Hdtap_Sucess == reply->Result)
+    {
+        printf("Message Send Service Success\r\n");
+    }
+    else
+    {
+       printf("Message Send Service Failure\r\n");
+    }
+}
+
+
+
+void MessageSendingReq_rec(void * hdtap)
+{
+  /*收到中继台发过来的短消息准备发送给BLE设备，并回复Reply*/
+  //待调试
+  printf("OB-Rx：Message Req \r\n ");
+
+}
+
+
+

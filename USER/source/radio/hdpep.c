@@ -22,7 +22,7 @@ void hdpep_cfg(void)
     exe.HdpepFunc = PowerUpCheck_req;
     exe.Parameter = NULL;
     QueuePush(HdpepExecQue, &exe);
-    
+     
     exe.Opcode = NOTIFY(RadioidAndRadioipQuery);
     exe.HdpepFunc = RadioidAndRadioipQuery_req;
     exe.Parameter = NULL;
@@ -106,8 +106,10 @@ void hdpep_exe( void * hdpep)
             HdpepExeList[i].HdpepFunc(ptr);
             break;
         }
-    }
+    } 
+    
 }
+
 
 
 unsigned char hdpep_checksum(void * hdpep,  unsigned int PayloadLen)
@@ -264,7 +266,7 @@ void PrivateMessage_trans(void * p)
     req->Header.MshHdr = HDPEP_TMP;//0x09
     
     HdpepOpcode_t op;
-    op.TMS.Ack = ACK_NotRequired;//不需要ACK
+    op.TMS.Ack = ACK_Required;//ACK_NotRequired;//不需要ACK
     op.TMS.Option = Disable_OptionFiels;
     op.TMS.Opcode = PrivateMessageTransmission;      
     req->Header.Opcode.Store = htons(op.Store);//0x00A1
@@ -311,8 +313,11 @@ void PrivateMessage_trans(void * p)
       
     //协议结构处理,将checksum 和msgend 贴在TMData的末尾以便传输。
       
-      req->TMData[msg->Header.Length] =  req->End.Checksum; 
-      req->TMData[msg->Header.Length+1] =  req->End.MsgEnd; 
+        //req->TMData[msg->Header.Length] =  0x17;
+      //req->TMData[msg->Header.Length+1] =  0x03;
+    
+   req->TMData[msg->Header.Length] =  req->End.Checksum; 
+   req->TMData[msg->Header.Length+1] = req->End.MsgEnd; 
     
       
 //    HdpepEnd_t * end = (HdpepEnd_t *)((unsigned char *)req + sizeof(HdpepHeader_t) + msg->Header.Length);

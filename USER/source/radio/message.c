@@ -49,8 +49,20 @@ void msg_send( Message_t * msg)
 
 unsigned char  msg_receive(Message_t * msg)
 {  
-    unsigned char hdpep[MAX_PAYLOAD_SIZE];
-    if(SUCCESS == hdpep_receive(hdpep))hdpep_exe(hdpep); 
+    unsigned char hdData[MAX_PAYLOAD_SIZE];
+    
+    
+#ifdef  TRUNKING_MODE
+  
+    if(SUCCESS == hdtap_receive(hdData))hdtap_exe(hdData); 
+    
+#else
+    
+ 
+    if(SUCCESS == hdpep_receive(hdData))hdpep_exe(hdData); 
+    
+    
+#endif
 
     if(queue_ok != QueuePull(MsgRxQue, msg))//get data for Que.
     {

@@ -135,6 +135,8 @@ unsigned char hrnp_receive(Hrnp_t * hrnp)
         hrnp->Header.Length = htons(hrnp->Header.Length);
         hrnp->Header.PN = htons(hrnp->Header.PN);
                 
+        
+        printf("OB-R-Hrnp_Opcode:0x%x\r\n", hrnp->Header.Opcode);
         //send ack
         if(HRNP_CLOSE == hrnp->Header.Opcode)
         {
@@ -142,13 +144,15 @@ unsigned char hrnp_receive(Hrnp_t * hrnp)
         }
         else if(HRNP_DATA == hrnp->Header.Opcode)
         {
+            
             hrnp_data_ack(hrnp);
+            
             
         }
         else
         {
           //other Opcode
-          printf("OB-R-Hrnp_Opcode:%x\r\n", hrnp->Header.Opcode);
+         // printf("OB-R-Hrnp_Opcode:%x\r\n", hrnp->Header.Opcode);
           //Mater answer to a HRNP_DATA_ACK packet
           if(hrnp->Header.Opcode == HRNP_DATA_ACK)
           {
