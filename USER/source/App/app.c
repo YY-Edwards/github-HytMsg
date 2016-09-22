@@ -12,10 +12,11 @@ void app_rec_msg(OB_Message_t * msg)
 
    Message_t Msg;
    
-   //未知bug,存储时被系统强制大小端转换了
+   //IAR是小端存储数据
    Msg.Header.Header = Msg_Header;
    Msg.Header.Header = htons(Msg.Header.Header);
    
+   //此处地址问题待测试
    Msg.Header.Address = (unsigned short)(msg->src); 
    Msg.Header.Address = htons(Msg.Header.Address);
    
@@ -31,9 +32,9 @@ void app_rec_msg(OB_Message_t * msg)
    memset(&(Msg.Payload[Msg.Header.Length]), 0x00, 60-Msg.Header.Length);
    
    
-   //未知bug,存储时被系统强制大小端转换了
+   
    Msg.Checksum = msg_checksum((Message_t *)&Msg);
-   Msg.Checksum = htons(Msg.Checksum);
+   //Msg.Checksum = htons(Msg.Checksum);
    
    //协议结构处理
    Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum>>8);

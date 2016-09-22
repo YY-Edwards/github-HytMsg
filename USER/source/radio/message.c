@@ -6,8 +6,24 @@ Queue_t MsgRxQue = NULL;
 
 void msg_init(void)
 {
+
+    hrnp_init(); 
+    
+#ifdef TRUNKING_MODE
+    
+    hdtap_init();
+    
+#else
+    
     hdpep_init();
+    
+    
+#endif
+    
+   
     MsgRxQue = QueueCreate(10, sizeof(Message_t));
+    
+    
 }
 void msg_receive_event(void * msg)
 {

@@ -8,7 +8,7 @@ extern unsigned char ble_alive_flag;
 
 void hdpep_init(void)
 {
-    hrnp_init(); 
+    //hrnp_init(); 
     hdpep_cfg();
 }
 
@@ -23,7 +23,7 @@ void hdpep_cfg(void)
     exe.Parameter = NULL;
     QueuePush(HdpepExecQue, &exe);
      
-    exe.Opcode = NOTIFY(RadioidAndRadioipQuery);
+    exe.Opcode = NOTIFY(RadioidAndRadioipQuery);/*****注意：这里应该是REQUEST(RadioidAndRadioipQuery)****/
     exe.HdpepFunc = RadioidAndRadioipQuery_req;
     exe.Parameter = NULL;
     QueuePush(HdpepExecQue, &exe);
@@ -92,6 +92,9 @@ void hdpep_cfg(void)
         }
     } 
 }
+
+
+
 
 void hdpep_exe( void * hdpep)
 {

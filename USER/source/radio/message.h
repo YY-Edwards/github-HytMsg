@@ -1,8 +1,18 @@
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
-#include "radio/hdpep.h"
-#include "radio/hdtap.h"
+
+//是否启用集群模式
+//#define  TRUNKING_MODE
+
+#ifdef  TRUNKING_MODE
+  #include "radio/hdtap.h"
+
+#else
+  #include "radio/hdpep.h"
+
+#endif
+
 #include "log/log.h"
 #include "app.h"
 
@@ -11,7 +21,7 @@
 #define MSG_ALIVE 0x02
 #define MSG_NACK 0xFF
 
-#define MAX_MSG_DATA_SIZE 60
+#define MAX_MSG_DATA_SIZE 62//多出的两个字节用来存储checksum数据
 #define Msg_Header 0xFFFE
 
 

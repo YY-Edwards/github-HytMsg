@@ -36,6 +36,7 @@ unsigned char  ble_rx_counter = 0;
 unsigned char  Ble_send_flag = 0;
 unsigned char Ble_alive_counter = 0;
 
+
 int main ( void )
 {  
     SysTick_Config(SYSTEM_CLOCK / 1000);  //1ms   

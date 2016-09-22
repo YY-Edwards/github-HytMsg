@@ -314,7 +314,9 @@ unsigned char hrnp_data(unsigned char * dat, unsigned short length)
                     if(timeoutnumber >= 10)//1s
                     {
                       sta = WaitToSend; 
-                      //return FAILURE;
+                      printf("Time-Out\r\n");
+                      
+                      return FAILURE;
                     }
                 }
                 else

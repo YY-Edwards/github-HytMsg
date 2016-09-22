@@ -3,10 +3,6 @@
 
 #include "radio/hrnp.h" 
 #include "radio/message.h"
-#include "radio/hdpep.h"
-
-#define TRUNKING_MODE
-
 
 #define HDTAP 0x02  //little-endian mode
 
@@ -19,13 +15,25 @@
 #define NOTIFY_MASK 0x1
 #define BRDCST_MASK 0xB
 
+#define MSH_END 0x03
+
 
 #define REQUEST(x) ((REQUEST_MASK << 12) | (x))
 #define NOTIFY(x) ((NOTIFY_MASK << 12) | (x))
 #define REPLY(x) ((REPLY_MASK << 12) | (x))
+#define BRDCST(x) ((BRDCST_MASK << 12) | (x))
 
 #define Hdtap_Sucess 0x00
 #define Hdtap_failure 0x01
+
+
+typedef enum
+{
+  Hdtap_Send,
+  Hdtap_Resend,
+  Hdtap_Reply,
+  
+}HdtapSta_t;
 
 
 //注意测试结构体内的内存分配
@@ -71,6 +79,114 @@ typedef struct
 }HdtapEnd_t;
 
 
+#pragma   pack()
+
+
+
+
+#define TrunkingPowerUpCheck 0x00C6
+
+#pragma   pack(1)
+typedef struct
+{
+
+
+    HdtapHeader_t Header;
+    HdtapEnd_t End;
+
+
+}TrunkingPowerUpCheck_req_t;
+
+
+typedef struct
+{
+  HdtapHeader_t Header;
+  unsigned char Result;
+  HdtapEnd_t End;
+  
+}TrunkingPowerUpCheck_reply_t;
+#pragma   pack()
+
+
+#define RadioIDQuery  0x0C02
+
+#pragma   pack(1)
+typedef struct
+{
+
+
+    HdtapHeader_t Header;
+    HdtapEnd_t End;
+
+
+}RadioIDQuery_req_t;
+
+
+typedef struct
+{
+  HdtapHeader_t          Header;
+  unsigned char         Result;
+  unsigned int            ID;
+  HdtapEnd_t             End;
+  
+}RadioIDQuery_reply_t;
+#pragma   pack()
+
+
+
+
+#define DigitalTrunkingBusinessService 0x1C06
+
+//Target
+#define Message_Receipt         0x01  //corresponding notice message:0xBC09
+
+//Operation
+#define NOT_Inform_Peripheral   0x00 
+#define Inform_Peripheral       0x001
+
+
+#pragma   pack(1)
+
+
+#define MAX_SERVICE_CTR  10
+
+typedef struct
+{
+
+  unsigned char       Target;
+  unsigned char       Operation;
+
+
+}ServiceData_t;
+
+typedef struct
+{
+
+
+    HdtapHeader_t         Header;
+    unsigned char        Number;
+    ServiceData_t         ServiceData[MAX_SERVICE_CTR];
+    HdtapEnd_t            End;
+
+
+}DigitalTrunkingBusinessService_req_t;
+
+
+typedef struct
+{
+  HdtapHeader_t          Header;
+  unsigned char         Result;
+  HdtapEnd_t             End;
+  
+}DigitalTrunkingBusinessService_reply_t;
+#pragma   pack()
+
+
+#define MessageSendingReq  0x0C08
+
+#pragma   pack(1)
+
+
 typedef struct
 {
   HdtapHeader_t           Header;
@@ -87,11 +203,6 @@ typedef struct
 }TrunkingMessage_req_t;
 
 
-#pragma   pack()
-
-
-void MessageSendingRequest(void * p);
-
 
 typedef struct
 {
@@ -102,11 +213,38 @@ typedef struct
 }
 MessageSending_reply_t;
 
+#pragma   pack()
 
 
-void MessageSending_reply(void * hdtap);
-void MessageSendingReq_rec(void * hdtap);
 
+#define TrunkingMsg  0x09
+
+#define MessageReceivingReport  0xBC09
+
+//Oprion
+#define Text_Message    0x00
+//#define Status_Message  0x20
+
+
+#pragma   pack(1)
+typedef struct
+{
+  HdtapHeader_t           Header;
+  
+  unsigned char         CallType;
+  unsigned char         Option;
+  unsigned short        Datalen;
+  unsigned int          GroupID;//This value is invalid for private message
+  unsigned int          SourceID;
+ 
+  unsigned char         MsgData[242];
+
+  
+  HdtapEnd_t              End;
+  
+}MessageReceivingReport_brd_t;
+
+#pragma   pack(1)
 
 
 typedef struct
@@ -116,22 +254,43 @@ typedef struct
     void  * Parameter; 
 }HdtapExe_t;
 
-#define MessageSendingReq  0x0C08
 
 
-#define MAX_HDTAP_EXE_LIST 5
+void hdtap_init(void);
+void hdtap_cfg(void);
+
+void TrunkingPowerUpCheck_req(void * p);
+void TrunkingPowerUpCheck_reply(void *hdtap);
+
+void RadioIDQuery_req(void *p);
+void RadioIDQuery_reply(void *hdtap);
+
+void DigitalTrunkingBusinessService_req(void * p);
+void DigitalTrunkingBusinessService_reply(void * hdtap);
+
+void MessageSendingRequest(void * p);
+void MessageSending_reply(void * hdtap);
+void MessageSendingReq_rec(void * hdtap);
+
+void MessageReceivingReport_rec(void * hdtap);
+
+
+
+#define MAX_HDTAP_EXE_LIST 10
 
 static const HdtapExe_t HdtapExeList[MAX_HDTAP_EXE_LIST] =
 {
 
-  {REPLY(PowerUpCheck), PowerUpCheck_reply},
+  {REPLY(TrunkingPowerUpCheck), TrunkingPowerUpCheck_reply},
   
-  {REPLY(RadioidAndRadioipQuery), RadioidAndRadioipQuery_reply},
+  {REPLY(RadioIDQuery), RadioIDQuery_reply},
   
-  {REPLY(TextMessageNotification),TextMessageNotification_reply},
-  
+  {REPLY(DigitalTrunkingBusinessService),DigitalTrunkingBusinessService_reply},
   
   {REPLY(MessageSendingReq), MessageSending_reply},
+  
+  {BRDCST(MessageReceivingReport), MessageReceivingReport_rec},
+  
   
   {MessageSendingReq, MessageSendingReq_rec},//注意，这里调用准备向蓝牙发送收到的短消息
   
