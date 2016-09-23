@@ -68,7 +68,7 @@ void MessageSendingRequest(void * p)
  
     for(i=0 ; i<msg->Header.Length; )
           {
-            //将radio发过来的短信数据每两个字节进行大小端转换为正常的unicode码
+            //将Ble发过来的短信数据每两个字节进行大小端转换为Radio可以识别大端的unicode码
             temp = req->TMData[i];
             req->TMData[i] = req->TMData[i+1];
             req->TMData[i+1] = temp;

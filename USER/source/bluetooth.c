@@ -132,8 +132,16 @@ unsigned char ble_receive(Message_t * msg)
      //收到的数据超过协议最大数据包长度（68bytes）也是可以通过的
      //if((Counter >= sizeof(MessageHeader_t) + msg->Header.Length + 2) && (Msg_Header == htons(msg->Header.Header)) )
      
-     if((Counter <= sizeof(Message_t)) && (Msg_Header == htons(msg->Header.Header)) )//可能是双字节数据：低位在前，高位在后。即BLE发送0xfffe，即OB板先收到0xfe,然后收到0xff.因此需要大小端转换
-     //if((Msg_Header == htons(msg->Header.Header)))
+     
+     //即BLE发送0xfffe，即OB板先收到0xff,然后收到0xfe.
+      /*IAR是小端存储数据,即0xff 在前，0xfe在后，即存储数据为0xfeff,因此需要大小端转换*/
+     //双字节数据都应做相同处理
+     
+     /*为测试校验码，对收到的需要校验的数据不做大小端变换并重新赋值处理*/
+     //因为把数据做大小端变化后会影响校验函数的结果.
+     //校验数据包括：地址，命令，长度和数据
+     
+     if((Counter <= sizeof(Message_t)) && (Msg_Header == htons(msg->Header.Header)))
       {
             
             switch(msg->Header.Opcode)
@@ -141,10 +149,12 @@ unsigned char ble_receive(Message_t * msg)
               
               case MSG_DATA://0x01
                   
-                      unsigned short rxcheck = *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
-                        
-                      //if(htons(rxcheck) == msg_checksum(msg)) 校验有差异 
-                      if(htons(rxcheck))
+                      unsigned short local_rxcheck = msg_checksum(msg);//MODBUS——CRC
+                      //unsigned short rxcheck = *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
+                       msg->Checksum =   *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
+                           
+                      //if(htons(msg->Checksum) == local_rxcheck) //校验有差异 
+                      if(htons(msg->Checksum))
                       {
                           ble_rx_counter =0;
                           Counter = 0;
@@ -154,6 +164,9 @@ unsigned char ble_receive(Message_t * msg)
                       else
                       {
                           ble_send_ack(MSG_NACK);
+                          
+                          printf("\r\n  Data_CRC is error  \r\n");
+                          
                       }
                       
                     

@@ -289,10 +289,10 @@ static const HdtapExe_t HdtapExeList[MAX_HDTAP_EXE_LIST] =
   
   {REPLY(MessageSendingReq), MessageSending_reply},
   
-  {BRDCST(MessageReceivingReport), MessageReceivingReport_rec},
+  {BRDCST(MessageReceivingReport), MessageReceivingReport_rec},//注意，这里调用准备向蓝牙发送收到的短消息
   
   
-  {MessageSendingReq, MessageSendingReq_rec},//注意，这里调用准备向蓝牙发送收到的短消息
+  {MessageSendingReq, MessageSendingReq_rec},
   
   
 };

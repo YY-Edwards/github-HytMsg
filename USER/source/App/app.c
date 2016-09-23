@@ -12,11 +12,15 @@ void app_rec_msg(OB_Message_t * msg)
 
    Message_t Msg;
    
-   //IAR是小端存储数据
+   //IAR是小端存储数据,即低位在前，高位在后。而与蓝牙协议中需要变换为高位在前，低位在后。
+   /*例如:IAR中数据 0xfffe :0xfe  0xff 。则先发送oxfe,再发送0xff*/
+   /*则与BLE的通信时需要大小端转换，即先发送0xff,再发送0xfe*/
+   /*双字节数据都需要做大小端转换*/
+   
    Msg.Header.Header = Msg_Header;
    Msg.Header.Header = htons(Msg.Header.Header);
    
-   //此处地址问题待测试
+  
    Msg.Header.Address = (unsigned short)(msg->src); 
    Msg.Header.Address = htons(Msg.Header.Address);
    
@@ -34,7 +38,7 @@ void app_rec_msg(OB_Message_t * msg)
    
    
    Msg.Checksum = msg_checksum((Message_t *)&Msg);
-   //Msg.Checksum = htons(Msg.Checksum);
+   Msg.Checksum = htons(Msg.Checksum);
    
    //协议结构处理
    Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum>>8);

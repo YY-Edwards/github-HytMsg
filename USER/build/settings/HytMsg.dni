@@ -1,5 +1,5 @@
 [DebugChecksum]
-Checksum=-1782197060
+Checksum=-1621068356
 [Stack]
 FillEnabled=0
 OverflowWarningsEnabled=1
@@ -25,23 +25,20 @@ Fmt1=HdpepEnd_t-MsgEnd	4	0
 Fmt2=HdpepHeader_t-Length	4	0
 Fmt3=HdpepHeader_t-MshHdr	4	0
 Fmt4=HdpepOpcode_t-Store	4	0
-Fmt5=HdtapHeader_t-Length	4	0
-Fmt6=HdtapHeader_t-MshHdr	4	0
-Fmt7=HdtapOpcode_t-Store	4	0
-Fmt8=HrnpHeader_t-CheckSum	4	0
-Fmt9=HrnpHeader_t-PN	4	0
-Fmt10=MessageHeader_t-Address	4	0
-Fmt11=MessageHeader_t-Header	4	0
-Fmt12=MessageHeader_t-Length	4	0
-Fmt13=MessageHeader_t-Opcode	4	0
-Fmt14=Message_t-Checksum	4	0
-Fmt15=OB_Message_t-TMLen	4	0
-Fmt16=OB_Message_t-dest	4	0
-Fmt17=OB_Message_t-src	4	0
-Fmt18=OB_Message_t-type	4	0
-Fmt19=OpcodeStruct_t-Mask	4	0
-Fmt20=OpcodeStruct_t-Opcode	4	0
-Fmt21=OpcodeTMS_t-Opcode	4	0
+Fmt5=HrnpHeader_t-CheckSum	4	0
+Fmt6=HrnpHeader_t-PN	4	0
+Fmt7=MessageHeader_t-Address	4	0
+Fmt8=MessageHeader_t-Header	4	0
+Fmt9=MessageHeader_t-Length	4	0
+Fmt10=MessageHeader_t-Opcode	4	0
+Fmt11=Message_t-Checksum	4	0
+Fmt12=OB_Message_t-TMLen	4	0
+Fmt13=OB_Message_t-dest	4	0
+Fmt14=OB_Message_t-src	4	0
+Fmt15=OB_Message_t-type	4	0
+Fmt16=OpcodeStruct_t-Mask	4	0
+Fmt17=OpcodeStruct_t-Opcode	4	0
+Fmt18=OpcodeTMS_t-Opcode	4	0
 [array_types]
 Fmt0=unsigned char[1000]	4	0
 Fmt1=unsigned char[160]	4	0
@@ -64,8 +61,11 @@ Fmt11={W}1:ts	4	0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.40.4" 0 0 1 "" 0 "" 0
-Count=1
+Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.41.4" 0 0 1 "" 0 "" 0
+Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.20.4" 0 0 1 "" 0 "" 0
+Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\bluetooth.c}.144.6" 0 0 1 "" 0 "" 0
+Bp3=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\bluetooth.c}.157.23" 0 0 1 "" 0 "" 0
+Count=4
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
