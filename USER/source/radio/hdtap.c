@@ -52,7 +52,7 @@ void MessageSendingRequest(void * p)
     req->TargetID = RadioID ;
     //req->DestIP = htonl(ID2IP(msg->Header.Address));
     
-    printf("[RECEIVE BLE MSG AND SEND TO TargetID: %x]\r\n", req->TargetID); 
+    printf("[RECEIVE BLE MSG AND SEND TO TargetID: ox%08X]\r\n", req->TargetID); 
     
     req->CallType = Private_Call;
     

@@ -119,6 +119,9 @@ static void usart_log_init(void)
     //USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
 
     USART_Cmd(USART3, ENABLE); 
+    USART_ClearFlag(USART3,USART_FLAG_TC); //清除USART_FLAG_TC，解决第一个字节不能发出的问题 
+    while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET)
+    {}
 }
 
 void USART3_IRQHandler()

@@ -142,7 +142,7 @@ typedef struct
 
 //Operation
 #define NOT_Inform_Peripheral   0x00 
-#define Inform_Peripheral       0x001
+#define Inform_Peripheral       0x01
 
 
 #pragma   pack(1)
