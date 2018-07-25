@@ -3,7 +3,7 @@
 
 
 //是否启用集群模式
-#define  TRUNKING_MODE
+//#define  TRUNKING_MODE
 
 #ifdef  TRUNKING_MODE
   #include "radio/hdtap.h"

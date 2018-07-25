@@ -3,7 +3,8 @@
 
 
 Queue_t HdpepExecQue = NULL;
-unsigned int SrcIP;
+unsigned int Local_RadioIP;
+unsigned int Local_RadioID;
 extern unsigned char ble_alive_flag;
 
 void hdpep_init(void)
@@ -200,7 +201,7 @@ void RadioidAndRadioipQuery_req(void *p)
     req->Header.Opcode.Struct.Opcode = RadioidAndRadioipQuery;
     req->Header.Length = 1;
     
-    req->Traget = Radio_IP;
+    req->Traget = Radio_ID;//Radio_IP;
    
     req->End.Checksum = hdpep_checksum(req, req->Header.Length);
     req->End.MsgEnd = MSH_END; 
@@ -213,18 +214,23 @@ void RadioidAndRadioipQuery_reply(void *hdpep)
     RadioidAndRadioipQuery_reply_t * reply = (RadioidAndRadioipQuery_reply_t *)hdpep;
     if(Hdpep_Sucess == reply->Result)
     {
-        if(Radio_IP == reply->Traget)
+        if(Radio_IP == reply->Traget)//经测试发现，radio传过来的数据是大端模式，不知道为什么
         {
-          SrcIP = reply->Value;
+          Local_RadioIP = htonl(reply->Value);
           
-          printf("Query Radio Ip Success : 0x%08X\r\n", reply->Value);
+          printf("Query Radio Ip Success : 0x%08X\r\n", Local_RadioIP);
+        }
+        else if(Radio_ID == reply->Traget)
+        {
+          Local_RadioID = reply->Value;
+          printf("Query Radio Id Success : %d\r\n", Local_RadioID);
         }
         
         
     }
     else
     {
-       printf("Msg Notify CFG Failure\r\n");
+       printf("Query Radio Failure\r\n");
     }
 }
 
@@ -375,6 +381,7 @@ void PrivateMessage_rec(void * hdpep)
 {
     PrivateMessage_trans_t  *rec = (PrivateMessage_trans_t *)hdpep;
     
+    //根据协议，TMS协议是大端模式，将收取到的数据再次进行大端转换则变换成小端数据
     rec->RequestID = htonl(rec->RequestID);
     rec->DestIP = htonl(rec->DestIP);
     rec->SrcIP = htonl(rec->SrcIP);
@@ -466,7 +473,7 @@ void GroupMessage_trans(void * p)
 
     req->RequestID = htonl(req_id++);
     req->GroupID = htonl(msg->Header.Address);
-    req->SrcIP = htonl(SrcIP);
+    req->SrcIP = htonl(Local_RadioIP);
     
     memcpy(req->TMData, msg, msg->Header.Length + sizeof(MessageHeader_t) + 2);
     

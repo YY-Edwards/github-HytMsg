@@ -28,7 +28,7 @@ void app_rec_msg(OB_Message_t * msg)
    Msg.Header.Opcode = 0x01;
    
    //×î´óÎª60bytes
-   if(msg->TMLen >= 60)Msg.Header.Length = 0x3c;
+   if(msg->TMLen >= 60)Msg.Header.Length = 0x3c;//60bytes
    else
    Msg.Header.Length = msg->TMLen;
    
