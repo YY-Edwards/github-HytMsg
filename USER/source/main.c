@@ -42,7 +42,7 @@ int main ( void )
     SysTick_Config(SYSTEM_CLOCK / 1000);  //1ms   
   
     log_init();
-    printf("log iniitlize finish\r\n");
+    printf("log initialize finished\r\n");
     
     
     msg_init();

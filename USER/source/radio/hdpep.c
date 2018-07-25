@@ -81,6 +81,7 @@ void hdpep_cfg(void)
                 if((resendtimes += 1) >= 3)//resend times
                 {
                      resendtimes = 0;
+                     sta = Hdpep_Send;//超过3次重发则丢弃，并进入下一条发送
                       //sta = ExecFunc;
                 }
             }  
@@ -144,7 +145,7 @@ unsigned char hdpep_receive(void *hdpep)
         if(hrnp.Header.Length >= sizeof(HrnpHeader_t) + sizeof(HdpepHeader_t) +sizeof(HdpepEnd_t))
         {
             HdpepHeader_t * ptr = (HdpepHeader_t *)hrnp.Payload.Data;//hdpep-header结构指向
-            if(HDPEP_RCP != ptr->MshHdr)//big-endian mode
+            if(HDPEP_RCP != ptr->MshHdr)//big-endian mode,根据hdpep协议文档，只有RCP协议是小端模式
             {
                 //Hdpep 协议结构
                 ptr->Opcode.Store = htons(ptr->Opcode.Store);

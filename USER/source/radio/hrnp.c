@@ -14,7 +14,7 @@ void hrnp_init(void)
 {
     physical_init();
     IsHrnpConnect = hrnp_connect();
-    printf("Hrnp Connect Finish\r\n");
+    printf("Hrnp Connect Finished\r\n");
 }
 
 unsigned short GetHrnpChecksum(unsigned char * pHeader, unsigned char *pData, unsigned int len)

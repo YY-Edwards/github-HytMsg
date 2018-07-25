@@ -371,6 +371,7 @@ void hdtap_cfg(void)
                 {
                      resendtimes = 0;
                      printf("Resend times is over\r\n");
+                     sta = Hdtap_Send;//超时则丢弃，进行下一次发送
                       //sta = ExecFunc;
                 }
             }  
