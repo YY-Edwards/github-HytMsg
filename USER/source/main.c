@@ -41,6 +41,8 @@ int main ( void )
 {  
     SysTick_Config(SYSTEM_CLOCK / 1000);  //1ms   
   
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);//配置中断优先组，统一一次性配置。
+    
     log_init();
     printf("log initialize finished\r\n");
     

@@ -74,7 +74,7 @@ static void nvic_log_init(void)
     NVIC_InitTypeDef NVIC_InitStructure;
     
     /* Configure the NVIC Preemption Priority Bits */  
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+    //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
     
     /* Enable the USART3 Interrupt */
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;

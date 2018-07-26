@@ -1,6 +1,8 @@
 #include "bluetooth.h"
 
 Queue_t BluetoothRxQue = NULL;
+#define USART2_BUFF_LEN 128
+volatile u8 USART2_RX_BUFF[USART2_BUFF_LEN]={0};
 
 static void rcc_ble_init(void)
 {
@@ -15,7 +17,7 @@ static void nvic_ble_init(void)
     NVIC_InitTypeDef NVIC_InitStructure;
     
     /* Configure the NVIC Preemption Priority Bits */  
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+    //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
     
     /* Enable the USART3 Interrupt */
     NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
@@ -58,6 +60,111 @@ static void gpio_ble_init(void)
     
 }
 
+static void ble_usart_interface_init()
+{
+  
+   GPIO_InitTypeDef GPIO_InitStructure;
+   
+  /*使能串口2,BLE模块使用的GPIO时钟*/
+   RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
+
+  /*使能串口2时钟*/
+  RCC_APB1PeriphClockCmd(USART2_CLK, ENABLE); 
+  
+  /* Configure USART2 Rx as input floating */
+  GPIO_InitStructure.GPIO_Pin = USART2_RxPin;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init(USART2_GPIO, &GPIO_InitStructure);    
+  
+  /* Configure USART2 Tx as alternate function push-pull */
+  GPIO_InitStructure.GPIO_Pin = USART2_TxPin;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  
+  GPIO_Init(USART2_GPIO, &GPIO_InitStructure);
+
+  /* Configure BLE_WKUP(PB9) and BLE_RESET(PB14) as alternate function push-pull */
+  GPIO_InitStructure.GPIO_Pin = BLE_ResetPin | BLE_WkupPin ;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  
+  GPIO_Init(BLE_GPIO, &GPIO_InitStructure);
+  
+  GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
+  delaynms(200);//延时200ms
+  GPIO_SetBits(BLE_GPIO, BLE_ResetPin);//拉高BLE的复位脚:1
+  
+
+  GPIO_ResetBits(BLE_GPIO, BLE_WkupPin);//唤醒BLE:0
+  
+  /* USART2 configuration ------------------------------------------------------*/
+
+  /* USART2 configured as follow:
+        - BaudRate = 9600 baud  
+        - Word Length = 8 Bits
+        - One Stop Bit
+        - No parity
+        - Hardware flow control disabled (RTS and CTS signals)
+        - Receive and transmit enabled
+  */
+  USART_InitStructure.USART_BaudRate = 9600;               /*设置波特率为9600*/
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;/*设置数据位为8*/
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;     /*设置停止位为1位*/
+  USART_InitStructure.USART_Parity = USART_Parity_No;        /*无奇偶校验*/
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;/*无硬件流控*/
+  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;  /*发送和接收*/
+
+  /*配置串口2 */
+  USART_Init(USART2, &USART_InitStructure);
+ 
+  /*使能串口2的接收中断*/
+	
+  
+  USART_ITConfig(USART2, USART_IT_RXNE, DISABLE);
+  USART_ITConfig(USART2, USART_IT_TC, DISABLE);
+  USART_ITConfig(USART2,USART_IT_IDLE,ENABLE);//空闲中断（接收未知长度，则使用空闲中断来判断是否接收完毕） 
+  USART_ClearFlag(USART2,USART_FLAG_IDLE); 				//清USART_FLAG_IDLE标志 
+
+
+  //采用DMA方式接收  
+  USART_DMACmd(USART2,USART_DMAReq_Rx ,ENABLE);
+    
+  //开启DMA1(channel1~7)的时钟
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+  
+  /* DMA1 channel 6 configuration */ //USART2_RX  
+  DMA_DeInit(DMA1_Channel6);  
+  DMA_InitStructure.DMA_PeripheralBaseAddr      =(u32)(&USART2->DR);  			//外设串口2地址  
+ 
+  DMA_InitStructure.DMA_MemoryBaseAddr          =(u32)USART2_RX_BUFF;
+  DMA_InitStructure.DMA_DIR                     =DMA_DIR_PeripheralSRC;   	//外设作为目的地址   //DMA_DIR_PeripheralSRC;   //外设作为DMA的源端  
+  DMA_InitStructure.DMA_BufferSize              =USART2_BUFF_LEN; 				//BufferSize;      //传输缓冲器大小 
+  DMA_InitStructure.DMA_PeripheralInc           =DMA_PeripheralInc_Disable; 	//外设递增模式禁止   DMA_PeripheralInc_Enable;            //外设地址增加  
+  DMA_InitStructure.DMA_MemoryInc               =DMA_MemoryInc_Enable;   	//内存地址自增  
+  DMA_InitStructure.DMA_PeripheralDataSize      =DMA_PeripheralDataSize_Byte; 	//传输方式：字节   DMA_PeripheralDataSize_Word;    //字（32位）  
+  DMA_InitStructure.DMA_MemoryDataSize          =DMA_MemoryDataSize_Byte;  	//内存存储方式：字节  DMA_MemoryDataSize_Word;  
+  DMA_InitStructure.DMA_Mode                    =DMA_Mode_Normal;  		//DMA_Mode_Normal 正常模式，只传送一次;  DMA_Mode_Circular:循环模式，不停的传送;  
+  DMA_InitStructure.DMA_Priority                =DMA_Priority_VeryHigh;  	//串口1的接收作为最高优先级
+  DMA_InitStructure.DMA_M2M                     =DMA_M2M_Disable;             	//DMA_M2M_Enable;      
+  DMA_Init(DMA1_Channel6,&DMA_InitStructure); 
+
+	//使能通道6  
+  DMA_Cmd(DMA1_Channel6,ENABLE);  
+  
+  
+  /* Enable the USART2 Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;			//子优先级1
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  /* 使能串口2 */
+  USART_Cmd(USART2, ENABLE);
+  USART_ClearFlag(USART2,USART_FLAG_TC); //清除USART_FLAG_TC，解决第一个字节不能发出的问题 
+  while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
+    {}
+
+}
 
 static void usart_ble_init(void)
 {
@@ -81,10 +188,20 @@ static void usart_ble_init(void)
 
 void ble_init(void)
 {
+  //新增usart2DMA空闲中断接受数据逻辑
+#if 1
+  
+  ble_usart_interface_init();//蓝牙串口接口初始化
+  
+#else
+  
     rcc_ble_init(); 
     nvic_ble_init();
     gpio_ble_init();
     usart_ble_init();
+    
+#endif
+  
     
     BluetoothRxQue = QueueCreate(80, 1); //这里分配的时候需注意
     

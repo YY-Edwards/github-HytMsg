@@ -17,7 +17,7 @@ static void nvic_hrnp_init(void)
      NVIC_InitTypeDef NVIC_InitStructure;
     
     /* Configure the NVIC Preemption Priority Bits */  
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+    //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
     
     /* Enable the USART1 Interrupt */
     NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
