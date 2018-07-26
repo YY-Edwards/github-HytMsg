@@ -24,7 +24,7 @@
 #define REPLY(x) ((REPLY_MASK << 12) | (x))
 
 //IP；ID转换
-#define ID2IP(x)  (0x0A000000 | ((x) & 0xFFFFFF))
+#define ID2IP(x)  (0x0A000000 | ((x) & 0xFFFFFF))//默认是在10网段下
 #define IP2ID(x)  ((x) & 0xFFFFFF)
 
 

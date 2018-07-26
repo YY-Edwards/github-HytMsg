@@ -70,6 +70,7 @@ int main ( void )
           if(ble_alive_flag)printf("\r\n B_alive:%d \r\n", Ble_alive_counter);
         
       }
+      memset(Msg, 0x00, sizeof(Message_t));//clear buff
 
     } 
     while(1);

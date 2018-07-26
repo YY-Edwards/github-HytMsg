@@ -276,7 +276,7 @@ void ble_send(Message_t * msg)
 void ble_send_ack(unsigned op)
 {
      Message_ack_t ack;
-     //大小端bug
+     //大小端bug,当时调试时，默认协议格式为大端模式。
      ack.Header.Header = htons(Msg_Header);
      ack.Header.Address = 0; 
      ack.Header.Length = 0;

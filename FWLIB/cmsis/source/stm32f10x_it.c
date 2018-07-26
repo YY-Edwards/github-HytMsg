@@ -124,8 +124,7 @@ void SysTick_Handler(void)
     {
       counter = 0;
       if(ble_alive_flag)
-      {        
-        
+      {              
         ble_send_ack(MSG_ALIVE);
         Ble_send_flag = 1;
       }

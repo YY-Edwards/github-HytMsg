@@ -5,6 +5,7 @@
 Queue_t HdpepExecQue = NULL;
 unsigned int Local_RadioIP;
 unsigned int Local_RadioID;
+static unsigned int g_target_RadioID = 7;//需要手动调整
 extern unsigned char ble_alive_flag;
 
 void hdpep_init(void)
@@ -201,7 +202,7 @@ void RadioidAndRadioipQuery_req(void *p)
     req->Header.Opcode.Struct.Opcode = RadioidAndRadioipQuery;
     req->Header.Length = 1;
     
-    req->Traget = Radio_ID;//Radio_IP;
+    req->Traget = Radio_IP;//Radio_ID;//Radio_IP;
    
     req->End.Checksum = hdpep_checksum(req, req->Header.Length);
     req->End.MsgEnd = MSH_END; 
@@ -218,7 +219,7 @@ void RadioidAndRadioipQuery_reply(void *hdpep)
         {
           Local_RadioIP = htonl(reply->Value);
           
-          printf("Query Radio Ip Success : 0x%08X\r\n", Local_RadioIP);
+          printf("Query Radio Ip Success : 0x%08x\r\n", Local_RadioIP);
         }
         else if(Radio_ID == reply->Traget)
         {
@@ -289,13 +290,15 @@ void PrivateMessage_trans(void * p)
 
     req->RequestID = htonl(req_id++);
     //req->DestIP = htonl(ID2IP(msg->Header.Address));
-    req->DestIP = htonl(ID2IP(5));
+    //req->DestIP = htonl(ID2IP(7));//注意，此处添加目标Radio的IP,默认都是在10网段下
+    req->DestIP = htonl(ID2IP(g_target_RadioID));
     
     //req->DestIP = htonl(ID2IP(1));
     
-    printf("[RECEIVE BLE MSG AND SEND TO RADIO %x]\r\n", req->DestIP); 
+    printf("[RECEIVE BLE MSG AND SEND TO RADIO 0x%x]\r\n", htonl(req->DestIP));//打印正常IP 
     
-    req->SrcIP = htonl(ID2IP(3));//need to change;设置为自动获取
+    //req->SrcIP = htonl(ID2IP(3));//need to change;设置为自动获取
+    req->SrcIP = htonl(Local_RadioIP);//上电后自动获取
     //req->SrcIP = htonl(ID2IP(2));
     
     
@@ -382,6 +385,7 @@ void PrivateMessage_rec(void * hdpep)
     PrivateMessage_trans_t  *rec = (PrivateMessage_trans_t *)hdpep;
     
     //根据协议，TMS协议是大端模式，将收取到的数据再次进行大端转换则变换成小端数据
+    //但是协议TMData里描述，内容为小端模式的unicode编码格式数据，实测也符合协议规定。
     rec->RequestID = htonl(rec->RequestID);
     rec->DestIP = htonl(rec->DestIP);
     rec->SrcIP = htonl(rec->SrcIP);
@@ -427,7 +431,8 @@ void PrivateMessage_rec(void * hdpep)
           
           for(i=0 ; i<Msg.TMLen; )
           {
-            //将radio发过来的短信数据每两个字节进行大小端转换为正常的unicode码
+            //将radio发过来的短信数据每两个字节进行大小端转换为大端数据。
+            //之前调试时默认与ble传输的协议格式为大端。
             temp = Msg.TMData[i];
             Msg.TMData[i] = Msg.TMData[i+1];
             Msg.TMData[i+1] = temp;
