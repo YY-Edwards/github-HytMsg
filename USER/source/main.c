@@ -29,6 +29,7 @@
 *******************************************************************************/
 
 #define SYSTEM_CLOCK 72000000
+RingQueue_t ble_msg_queue_ptr = NULL;
 
 
 unsigned char ble_alive_flag = 0;
@@ -48,9 +49,18 @@ int main ( void )
     
     
     msg_init();
+        
+    ble_msg_queue_ptr = malloc(sizeof(ring_queue_t));
+    if(ble_msg_queue_ptr ==NULL)
+    {
+      printf("malloc ble_msg_queue_ptr failure\r\n");
+      return 0;
+    }
     ble_init();  
-
+  
     Message_t Message, * Msg = &Message;
+    
+    
     
     for(;;)
     {        
@@ -75,6 +85,14 @@ int main ( void )
       memset(Msg, 0x00, sizeof(Message_t));//clear buff
 
     } 
+    
+    if(ble_msg_queue_ptr!=NULL)
+    {
+       free(ble_msg_queue_ptr);
+       ble_msg_queue_ptr =NULL;
+    }
+
+    
     while(1);
       
     return 0;

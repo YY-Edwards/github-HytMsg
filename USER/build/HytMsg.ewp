@@ -1914,6 +1914,9 @@
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\misc.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_dma.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_exti.c</name>
       </file>
       <file>

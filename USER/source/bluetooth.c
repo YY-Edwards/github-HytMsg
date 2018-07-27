@@ -1,8 +1,8 @@
 #include "bluetooth.h"
 
 Queue_t BluetoothRxQue = NULL;
-#define USART2_BUFF_LEN 128
-volatile u8 USART2_RX_BUFF[USART2_BUFF_LEN]={0};
+u8 USART2_RX_BUFF[USART2_BUFF_LEN]={0};
+ extern RingQueue_t ble_msg_queue_ptr;
 
 static void rcc_ble_init(void)
 {
@@ -63,8 +63,11 @@ static void gpio_ble_init(void)
 static void ble_usart_interface_init()
 {
   
-   GPIO_InitTypeDef GPIO_InitStructure;
-   
+  GPIO_InitTypeDef GPIO_InitStructure;
+  USART_InitTypeDef USART_InitStructure;
+  DMA_InitTypeDef  DMA_InitStructure; 
+  NVIC_InitTypeDef NVIC_InitStructure;
+ 
   /*使能串口2,BLE模块使用的GPIO时钟*/
    RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
 
@@ -193,6 +196,7 @@ void ble_init(void)
   
   ble_usart_interface_init();//蓝牙串口接口初始化
   
+  init_queue(ble_msg_queue_ptr);
 #else
   
     rcc_ble_init(); 
@@ -212,8 +216,131 @@ void ble_init(void)
 
 
  extern unsigned char  ble_rx_counter;
+u8 g_usart_recv_buf[200]={0};//全局变量
+Message_t g_rx_usart2_msg;
 unsigned char ble_receive(Message_t * msg)
 {
+  
+#if 1
+  bool parse_ret =false;
+  static PARSERSTATE m_parser_state = FIND_START_HEADER_H;
+  static int usart2_recv_msg_len = 0;
+  static int usart2_recv_msg_idx = 0;
+  int recv_len =0; 
+  memset(g_usart_recv_buf, 0x00, sizeof(g_usart_recv_buf));
+  bool ret = take_from_queue(ble_msg_queue_ptr, &g_usart_recv_buf[0], &recv_len, true);
+  if(ret != true)return FAILURE;
+  int index =0;
+  int bytecount =0;
+  u8 ch =0;
+  while(0 < recv_len--)
+  {
+    bytecount++;
+    ch = g_usart_recv_buf[index++];
+    switch(m_parser_state)
+    {
+      case FIND_START_HEADER_H:
+               g_rx_usart2_msg.Header.Header = ch;
+               m_parser_state = FIND_START_HEADER_L;
+        break;
+      case FIND_START_HEADER_L:
+            g_rx_usart2_msg.Header.Header = ((g_rx_usart2_msg.Header.Header<<8)&0xff00) | ch;
+            if(g_rx_usart2_msg.Header.Header == Msg_Header)
+               m_parser_state = HIGH_ADDR;
+            else
+              m_parser_state = FIND_START_HEADER_H;
+        
+        break;
+      case HIGH_ADDR:
+          g_rx_usart2_msg.Header.Address = ch;    
+          m_parser_state = LOW_ADDR;
+        break;
+      case LOW_ADDR:
+          g_rx_usart2_msg.Header.Address = ((g_rx_usart2_msg.Header.Address<<8)&0xff00) | ch;   
+          m_parser_state = COMMAND;
+        
+        break;
+      case COMMAND:
+          g_rx_usart2_msg.Header.Opcode = ch;    
+          m_parser_state = LENGTH;
+        
+        break;
+      case LENGTH:
+          g_rx_usart2_msg.Header.Length = ch; 
+          usart2_recv_msg_len = ch;
+          if(usart2_recv_msg_len > 60)
+          {
+            usart2_recv_msg_len = 60;
+            ble_send_ack(MSG_NACK);                       
+            printf("Usart2 recv data msg length is error  \r\n");
+          }
+          usart2_recv_msg_len +=2;//需要包含最后两个crc校验数据
+          usart2_recv_msg_idx = 0;
+          m_parser_state = READ_DATA;//get rest of msg
+        
+        break;
+      case READ_DATA:
+          g_rx_usart2_msg.Payload[usart2_recv_msg_idx++] = ch;
+          if((--usart2_recv_msg_len) == 0)
+          {
+            //get crc value
+            g_rx_usart2_msg.Checksum = 
+              (((g_rx_usart2_msg.Payload[usart2_recv_msg_idx-2]<<8) &0xff00) | g_rx_usart2_msg.Payload[usart2_recv_msg_idx-1]);      
+            
+            usart2_recv_msg_len = g_rx_usart2_msg.Header.Length + 6+ 2;//ble与usart2之间同行协议的总长度。
+            
+            //if(msg_checksum(&g_rx_usart2_msg) ==  g_rx_usart2_msg.Checksum)//校验通过
+            if(msg_checksum(&g_rx_usart2_msg)) 
+            {
+              if(g_rx_usart2_msg.Header.Opcode == MSG_DATA)
+              {
+                  ble_send_ack(MSG_ACK);
+                  memcpy(msg, (void *)&g_rx_usart2_msg, usart2_recv_msg_len);
+                  parse_ret = SUCCESS;
+              }
+              else if(g_rx_usart2_msg.Header.Opcode == MSG_ACK)
+              {
+                printf("Usart2 send msg okay.  \r\n");
+              }
+              else if(g_rx_usart2_msg.Header.Opcode == MSG_ALIVE)
+              {
+                printf("Usart2 should not recv this msg!  \r\n");
+              }
+              else if(g_rx_usart2_msg.Header.Opcode == MSG_NACK)
+              {
+                printf("should check the send msg!  \r\n");
+              }
+             
+            }
+            else
+            {
+              
+              ble_send_ack(MSG_NACK);
+                          
+              printf("Usart2 recv data CRC is error  \r\n");
+            }
+            m_parser_state = FIND_START_HEADER_H;
+            bytecount =0;
+          }
+        
+        break;
+       
+    default:
+        m_parser_state = FIND_START_HEADER_H;//reset parser
+      break;
+    
+    
+    }//end switch
+  }//end while
+  
+  return parse_ret;
+  
+  
+  
+  
+#else
+  
+  
    unsigned char * p = (unsigned char *)msg;
    static unsigned char Counter = 0;
    
@@ -343,6 +470,8 @@ unsigned char ble_receive(Message_t * msg)
 //   }
 
    return FAILURE; 
+   
+#endif 
    
   /************测试↑***************/ 
    

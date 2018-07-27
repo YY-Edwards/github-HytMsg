@@ -30,11 +30,13 @@ typedef struct
     
 } ring_queue_t;
 
-void init_queue(ring_queue_t ring_queue);
-bool take_from_queue(ring_queue_t ring_queue, void *buf, int *len, bool erase);
-bool push_to_queue(ring_queue_t ring_queue, void *buf, int len);
-void clear_queue(ring_queue_t ring_queue);
-bool queue_is_empty(ring_queue_t ring_queue);
+typedef ring_queue_t* RingQueue_t;
+
+void init_queue(RingQueue_t ring_queue);
+bool take_from_queue(RingQueue_t ring_queue, void *buf, int *len, bool erase);
+bool push_to_queue(RingQueue_t ring_queue, void *buf, int len);
+void clear_queue(RingQueue_t ring_queue);
+bool queue_is_empty(RingQueue_t ring_queue);
 
 typedef struct
 {

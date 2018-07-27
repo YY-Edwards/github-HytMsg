@@ -44,7 +44,8 @@
  extern unsigned char ble_alive_flag;   
  extern unsigned char  ble_rx_counter;
  extern unsigned char  Ble_send_flag;
- extern volatile u8 USART2_RX_BUFF[USART2_BUFF_LEN];
+ extern  u8 USART2_RX_BUFF[USART2_BUFF_LEN];
+ extern RingQueue_t ble_msg_queue_ptr;
 //
 //static uint16_t USART1_TXCounter;
 //extern uint8_t USART1_TXBuffer[];
@@ -262,6 +263,7 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   volatile u16 DMARxCounter = 0;
+  u16 temp = 0;
     /* error interrupt port */
     if((USART_GetITStatus(USART2, USART_IT_ORE) != RESET)
       ||(USART_GetITStatus(USART2, USART_IT_NE) != RESET)
@@ -275,11 +277,17 @@ void USART2_IRQHandler(void)
     if(USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)//空闲接收串口数据
     {
         DMA_Cmd(DMA1_Channel6,DISABLE);						//关闭DMA1通道6（USART2_RX） 
-        temp = USART1->SR;	   //貌似根据手册说，先读SR，再读DR就可以清除IDLE位。。。。
-        temp = USART1->DR;	        
+        temp = USART2->SR;	   //貌似根据手册说，先读SR，再读DR就可以清除IDLE位。。。。
+        temp = USART2->DR;	        
         DMARxCounter = sizeof(USART2_RX_BUFF) - DMA_GetCurrDataCounter(DMA1_Channel6);	//缓冲器数量够大//用缓冲器的设定值-当前指针数值（寄存器内容在每次DMA传输后递减）=接收的数据长度。 
-        //printf("\n\r-------Usart2 rx counter: %d\n\r",DMARxCounter);      
+        printf("-------Usart2 rx counter: %d\n\r",DMARxCounter);      
         //DMA_GetInputBytes(USART2_RX_BUFF, DMARxCounter);
+        
+        bool ret = push_to_queue(ble_msg_queue_ptr, USART2_RX_BUFF, DMARxCounter);
+        if(ret == false)
+        {
+          printf("-------Usart2 rx queue full !\n\r");
+        }
         
         memset(USART2_RX_BUFF, 0x00, sizeof(USART2_RX_BUFF));
         //设置传输数据长度  

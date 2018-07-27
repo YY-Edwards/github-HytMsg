@@ -6,6 +6,7 @@ static unsigned short HrnpPN = 0;
 static unsigned char IsHrnpConnect = 0;
 
 unsigned char  hrnp_connect(void);
+unsigned char hrnp_close(void);
 
 unsigned char hrnp_close_ack(Hrnp_t *);
 unsigned char hrnp_data_ack(Hrnp_t *);
@@ -149,6 +150,25 @@ unsigned char hrnp_receive(Hrnp_t * hrnp)
             
             
         }
+        else if(HRNP_REJECT == hrnp->Header.Opcode)
+        {
+          delaynms(100*10);
+          //u8 ret = hrnp_close();
+          //if(ret == SUCCESS)
+          {
+           // delaynms(100*10);
+            printf("[reconnect radio.] \r\n");
+            Hrnp_t hrnp;
+            hrnp.Header.Opcode = HRNP_CONNECT;
+            hrnp.Header.PN = DEFAULT_PN;
+            hrnp.Header.Length = sizeof(HrnpHeader_t);
+                      
+            hrnp_send(&hrnp);
+            delaynms(100*10);
+            delaynms(100*10);
+            //hrnp_connect();
+          }
+        }
         else
         {
           //other Opcode
@@ -202,7 +222,7 @@ unsigned char  hrnp_connect(void)
                     if(timeoutnumber >= 10)//1s
                     {
                       sta = WaitToSend; 
-                      //return FAILURE;
+                      return FAILURE;
                     }
                 }
                 else
@@ -252,7 +272,7 @@ unsigned char hrnp_close(void)
                     if(timeoutnumber >= 10)//1s
                     {
                       sta = WaitToSend; 
-                      //return FAILURE;
+                      return FAILURE;
                     }
                 }
                 else

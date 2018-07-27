@@ -6,7 +6,7 @@
 
 #include "lib/myqueue.h"
 #include "radio/message.h"
-
+#define USART2_BUFF_LEN 128
 #define USART2_GPIO              GPIOA
 #define USART2_CLK               RCC_APB1Periph_USART2
 #define USART2_GPIO_CLK          RCC_APB2Periph_GPIOA
@@ -28,5 +28,18 @@ void ble_send(Message_t * msg);
 unsigned char ble_receive(Message_t * msg);
 
 void ble_send_ack(unsigned op);
+
+typedef enum 
+{
+  FIND_START_HEADER_H =0,
+  FIND_START_HEADER_L,
+  HIGH_ADDR,
+  LOW_ADDR,
+  COMMAND,
+  LENGTH,
+  READ_DATA//°üº¬2bytesµÄCRC
+}PARSERSTATE;
+
+
 
 #endif
