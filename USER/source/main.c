@@ -15,6 +15,7 @@
 
 #include "main.h"
 #include "radio/message.h"
+#include "bluetooth.h"
 #include "app.h"
 
 
@@ -29,8 +30,6 @@
 *******************************************************************************/
 
 #define SYSTEM_CLOCK 72000000
-RingQueue_t ble_msg_queue_ptr = NULL;
-
 
 unsigned char ble_alive_flag = 0;
 unsigned char  ble_rx_counter = 0;
@@ -47,15 +46,7 @@ int main ( void )
     log_init();
     printf("log initialize finished\r\n");
     
-    
     msg_init();
-        
-    ble_msg_queue_ptr = malloc(sizeof(ring_queue_t));
-    if(ble_msg_queue_ptr ==NULL)
-    {
-      printf("malloc ble_msg_queue_ptr failure\r\n");
-      return 0;
-    }
     ble_init();  
   
     Message_t Message, * Msg = &Message;
@@ -85,14 +76,7 @@ int main ( void )
       memset(Msg, 0x00, sizeof(Message_t));//clear buff
 
     } 
-    
-    if(ble_msg_queue_ptr!=NULL)
-    {
-       free(ble_msg_queue_ptr);
-       ble_msg_queue_ptr =NULL;
-    }
-
-    
+      
     while(1);
       
     return 0;

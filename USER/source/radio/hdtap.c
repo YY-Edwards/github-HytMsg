@@ -43,7 +43,7 @@ void MessageSendingRequest(void * p)
     
     req->Header.Opcode.Store = op.Store;//0x0c08
        
-    if(msg->Header.Length >= 510)req->Header.Length = 510;//如果ble发过来的数据超过510bytes,则留两个字节给END
+    if(msg->Header.Length >= 200)req->Header.Length = 200;//如果ble发过来的数据超过200bytes,则留两个字节给END
     else
       req->Header.Length = (msg->Header.Length + 8);//TargetID[4]+CallType[1]+Option[1]+Datalen[2]+Msg[Datalen]
     
@@ -52,7 +52,7 @@ void MessageSendingRequest(void * p)
     req->TargetID = RadioID ;
     //req->DestIP = htonl(ID2IP(msg->Header.Address));
     
-    printf("[RECEIVE BLE MSG AND SEND TO TargetID: ox%08X]\r\n", req->TargetID); 
+    printf("[RECEIVE BLE MSG AND SEND TO TargetID: 0x%08X]\r\n", req->TargetID); 
     
     req->CallType = Private_Call;
     
@@ -136,25 +136,23 @@ void TrunkingPowerUpCheck_reply(void *hdtap)
 
 }
 
-void RadioIDQuery_req(void *p)
+void RegisterStatusQuery_req(void *p)
 {
-  
-     RadioIDQuery_req_t  RadioIDQuery_req,  * req = &RadioIDQuery_req;
+
+  RegisterStatusQuery_req_t  RegisterStatusQuery_req,  * req = &RegisterStatusQuery_req;
     
-    req->Header.MshHdr = HDTAP;
-    req->Header.Opcode.Struct.Mask = REQUEST_MASK;
-    req->Header.Opcode.Struct.Opcode = RadioIDQuery;
-    req->Header.Length = 0;
-   
-    req->End.Checksum = hdpep_checksum(req, req->Header.Length);
-    req->End.MsgEnd = MSH_END; 
-    
-    hrnp_data((void *)req,  sizeof(HdtapHeader_t) + sizeof(HdtapEnd_t));
+  req->Header.MshHdr = HDTAP;
+  req->Header.Opcode.Struct.Mask = REQUEST_MASK;
+  req->Header.Opcode.Struct.Opcode = RegisterServiceQuery;
+  req->Header.Length = 0;
  
+  req->End.Checksum = hdtap_checksum(req, req->Header.Length);
+  req->End.MsgEnd = MSH_END; 
+  
+  hrnp_data((void *)req,  sizeof(HdtapHeader_t) + sizeof(HdtapEnd_t));
+
 
 }
-
-
 
 void RadioIDQuery_reply(void *hdtap)
 {
@@ -180,13 +178,53 @@ void RadioIDQuery_reply(void *hdtap)
 
 }
 
+
+void RadioIDQuery_req(void *p)
+{
+  
+     RadioIDQuery_req_t  RadioIDQuery_req,  * req = &RadioIDQuery_req;
+    
+    req->Header.MshHdr = HDTAP;
+    req->Header.Opcode.Struct.Mask = REQUEST_MASK;
+    req->Header.Opcode.Struct.Opcode = RadioIDQuery;
+    req->Header.Length = 0;
+   
+    req->End.Checksum = hdtap_checksum(req, req->Header.Length);
+    req->End.MsgEnd = MSH_END; 
+    
+    hrnp_data((void *)req,  sizeof(HdtapHeader_t) + sizeof(HdtapEnd_t));
+ 
+
+}
+
+
+
+void RegisterStatusQuery_reply(void *hdtap)
+{
+
+    RegisterStatusQuery_reply_t * reply = (RegisterStatusQuery_reply_t *)hdtap;
+        
+    if(Hdtap_Sucess == reply->Status)
+    {               
+        printf("Radio register successful. \r\n");       
+     
+    }
+    else
+    {
+       printf("Radio unregister!\r\n");
+    }
+
+
+
+}
+
 void DigitalTrunkingBusinessService_req(void * p)
 {
     DigitalTrunkingBusinessService_req_t  DigitalTrunkingBusinessService_req,  * req = &DigitalTrunkingBusinessService_req;
     
     req->Header.MshHdr = HDTAP;
     req->Header.Opcode.Struct.Mask = NOTIFY_MASK;
-    req->Header.Opcode.Struct.Opcode = DigitalTrunkingBusinessService;
+    req->Header.Opcode.Struct.Opcode = (DigitalTrunkingBusinessService & 0x0fff);
     
     req->Number =1;
     req->ServiceData[0].Target = Message_Receipt;
@@ -244,7 +282,7 @@ unsigned char hdtap_receive(unsigned char *hdtap)
         //save reg hdtap
         if(hrnp.Header.Length >= sizeof(HrnpHeader_t) + sizeof(HdtapHeader_t) +sizeof(HdtapEnd_t))
         {
-            HdtapHeader_t * ptr = (HdtapHeader_t *)hrnp.Payload.Data;//hdtap-header结构指向
+            //HdtapHeader_t * ptr = (HdtapHeader_t *)hrnp.Payload.Data;//hdtap-header结构指向
          
             //把剩下的数据部分贴在hedep-header结构的后面
             memcpy(hdtap, hrnp.Payload.Data, hrnp.Header.Length - sizeof(HrnpHeader_t));
@@ -253,6 +291,11 @@ unsigned char hdtap_receive(unsigned char *hdtap)
             
             return SUCCESS;
         }
+        else if(hrnp.Header.Opcode == HRNP_REJECT)//需要重连
+        {         
+          printf("[need to reconnect radio.] \r\n");
+        }
+        
     }
     
     return FAILURE;
@@ -306,6 +349,11 @@ void hdtap_cfg(void)
     exe.Parameter = NULL;
     QueuePush(HdtapExecQue, &exe);
     
+    exe.Opcode = REQUEST(RegisterServiceQuery);//0x0C18
+    exe.HdtapFunc = RegisterStatusQuery_req;
+    exe.Parameter = NULL;
+    QueuePush(HdtapExecQue, &exe);
+    
     
     //此指令暂时无法测试
     exe.Opcode = NOTIFY(DigitalTrunkingBusinessService);//0x1C06
@@ -319,10 +367,10 @@ void hdtap_cfg(void)
     unsigned short timeout = 0;
     unsigned short resendtimes = 0;
     
-    memset(hdtap, 0x00, sizeof(hdtap));
     
     for(;;)
     {
+        memset(hdtap, 0x00, sizeof(hdtap));//clear 
         switch(sta)
         {
           case Hdtap_Send:
@@ -357,12 +405,22 @@ void hdtap_cfg(void)
             
           case Hdtap_Reply:       
             delaynms(100);  
-            if((SUCCESS == hdtap_receive(hdtap)) && (((HdtapHeader_t *)hdtap)->Opcode.Struct.Opcode == (exe.Opcode & 0x0FFF)))//receive
+            
+            if(SUCCESS == hdtap_receive(hdtap))
             {
+              if(((HdtapHeader_t *)hdtap)->Opcode.Struct.Opcode == (exe.Opcode & 0x0FFF))
+              {
                 hdtap_exe(hdtap);   
                 sta = Hdtap_Send;
                 break;
+              }
+              else
+              {
+                printf("receive unkown hdtap:[ 0x%04X ]\r\n", ((HdtapHeader_t *)hdtap)->Opcode.Struct.Opcode);
+              }
+            
             }
+      
             if((timeout += 1) >= 5)//timeout resend
             {
                 timeout = 0;
@@ -370,7 +428,7 @@ void hdtap_cfg(void)
                 if((resendtimes += 1) >= 3)//resend times
                 {
                      resendtimes = 0;
-                     printf("Resend times is over\r\n");
+                     printf("Resend times is overflow\r\n");
                      sta = Hdtap_Send;//超时则丢弃，进行下一次发送
                       //sta = ExecFunc;
                 }
@@ -391,14 +449,51 @@ void MessageSending_reply(void * hdtap)
     
     printf("reply->Result:0x%x\r\n", reply->Result);
     
-    if(Hdtap_Sucess == reply->Result)
+     switch(reply->Result)
     {
-        printf("Message Send Service Success\r\n");
+        case Success:
+              printf("Message Send Service: Success.\r\n");
+        break;
+        
+        case Failure:
+          
+              printf("Message Send Service: Failure.\r\n");
+          
+        break;
+        
+        case Unregistered:
+              printf("Message Send Service: Mater Radio is Unregistered.\r\n");
+              
+        break;
+        
+        case Low_Battery:
+          
+              printf("Message Send Service: Low_Battery.\r\n");
+        break;
+        
+        case Disabled_ID:
+               printf("Message Send Service: target radio ID is disabled.\r\n");
+          
+        break;
+        
+        case Disabled_Status_Code:
+               printf("Message Send Service: Disabled_Status_Code.\r\n");
+        break;
+        
+    default:
+      break;
+      
+    
     }
-    else
-    {
-       printf("Message Send Service Failure\r\n");
-    }
+    
+//    if(Hdtap_Sucess == reply->Result)
+//    {
+//        printf("Message Send Service Success\r\n");
+//    }
+//    else
+//    {
+//       printf("Message Send Service Failure\r\n");
+//    }
 }
 
 

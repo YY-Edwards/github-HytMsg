@@ -7,6 +7,7 @@ unsigned int Local_RadioIP;
 unsigned int Local_RadioID;
 static unsigned int g_target_RadioID = 7;//需要手动调整
 extern unsigned char ble_alive_flag;
+bool msg_allowed_send_flag= true;
 
 void hdpep_init(void)
 {
@@ -15,7 +16,12 @@ void hdpep_init(void)
 }
 
 void hdpep_cfg(void)
-{    
+{   
+    if(HdpepExecQue!=NULL)
+    {
+      QueueDelete(HdpepExecQue);
+      HdpepExecQue =NULL;
+    }
     HdpepExecQue = QueueCreate(5, sizeof(HdpepExe_t));
     if(NULL == HdpepExecQue)return;
     
@@ -274,6 +280,9 @@ void PrivateMessage_trans(void * p)
     Message_t * msg = (Message_t *)p;
     PrivateMessage_trans_t PrivateMessage_trans, *req = &PrivateMessage_trans;
     
+    memset(req, 0x00, sizeof(PrivateMessage_trans_t));//clear 
+    
+    
     req->Header.MshHdr = HDPEP_TMP;//0x09
     
     HdpepOpcode_t op;
@@ -282,7 +291,7 @@ void PrivateMessage_trans(void * p)
     op.TMS.Opcode = PrivateMessageTransmission;      
     req->Header.Opcode.Store = htons(op.Store);//0x00A1
     
-    if(msg->Header.Length >= 510)req->Header.Length = 510;//如果ble发过来的数据超过510bytes,则留两个字节给END
+    if(msg->Header.Length >= 200)req->Header.Length = 200;//如果ble发过来的数据超过200bytes,则留两个字节给END
     else
       req->Header.Length = htons(msg->Header.Length + 12);//RequestID[4]+DestID[4]+SrcIP[4]+TMData[msg->Header.Length]
     
@@ -352,6 +361,7 @@ void PrivateMessage_ack(void * hdpep)
     {
        printf("Send Private Msg Failure\r\n");
     }
+    msg_allowed_send_flag = true;
 }
 
 void PrivateMessage_sendack(void * p)
@@ -459,12 +469,12 @@ void PrivateMessage_rec(void * hdpep)
 }
 
 
-void GroupMessage_trans(void * p)
+void GroupMessage_transfer(void * p)
 {       
     static unsigned int req_id = 1;
     
     Message_t * msg = (Message_t *)p;
-    GroupMessage_trans_t GroupMessage_trans, *req = &GroupMessage_trans;
+    GroupMessage_trans_t groupmsg_trans, *req = &groupmsg_trans;
     
     req->Header.MshHdr = HDPEP_TMP;
     

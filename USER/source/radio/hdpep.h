@@ -246,6 +246,8 @@ void TextMessageNotification_reply(void * hdpep);
 void PrivateMessage_trans(void * p);
 void PrivateMessage_ack(void * hdpep);
 void PrivateMessage_rec(void * hdpep);
+void GroupMessage_transfer(void * p);
+
 
 #define MAX_HDPEP_EXE_LIST 5
 static const HdpepExe_t HdpepExeList[MAX_HDPEP_EXE_LIST] =

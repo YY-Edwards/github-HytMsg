@@ -3,7 +3,7 @@
 
 
 //是否启用集群模式
-//#define  TRUNKING_MODE
+#define  TRUNKING_MODE
 
 #ifdef  TRUNKING_MODE
   #include "radio/hdtap.h"
@@ -60,4 +60,5 @@ unsigned short msg_checksum(Message_t * msg);
 void msg_init(void);
 void msg_send( Message_t * msg);
 unsigned char  msg_receive(Message_t * msg);
+void msg_receive_event(void * msg);
 #endif

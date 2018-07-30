@@ -51,6 +51,8 @@ static void usart_hrnp_init(void)
   //USART_OverSampling8Cmd
     USART_InitTypeDef USART_InitStructure;
     
+    USART_Cmd(USART1, DISABLE); 
+    
     USART_OverSampling8Cmd(USART1, ENABLE);  
     
     USART_InitStructure.USART_BaudRate = 9600;               /*设置波特率为115200*/
@@ -85,7 +87,18 @@ void physical_init( void )
     gpio_hrnp_init();
     usart_hrnp_init();
     
+    if(UsartTxQue!= NULL)
+    {
+      QueueDelete(UsartTxQue);
+      UsartTxQue = NULL;
+    }
     UsartTxQue = QueueCreate(MAX_TX_DEEP, 1);
+    
+    if(UsartRxQue!= NULL)
+    {
+      QueueDelete(UsartRxQue);
+      UsartRxQue = NULL;
+    }
     UsartRxQue = QueueCreate(MAX_RX_DEEP, 1);   
 }
 
@@ -99,7 +112,11 @@ void usart_send(void * pbuf, unsigned int length)
     
     for(int i = 0 ; i < length; i++)
     {
-        if(queue_ok != QueuePush(UsartTxQue, (unsigned char *)pbuf + i))break;
+        if(queue_ok != QueuePush(UsartTxQue, (unsigned char *)pbuf + i))
+        {
+          printf("[QueuePush UsartTxQue failure !]\n");
+          break;
+        }
     }
        
     USART_ITConfig(USART1, USART_IT_TXE, ENABLE);

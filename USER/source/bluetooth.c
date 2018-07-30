@@ -2,7 +2,7 @@
 
 Queue_t BluetoothRxQue = NULL;
 u8 USART2_RX_BUFF[USART2_BUFF_LEN]={0};
- extern RingQueue_t ble_msg_queue_ptr;
+RingQueue_t ble_msg_queue_ptr = NULL;
 
 static void rcc_ble_init(void)
 {
@@ -93,7 +93,7 @@ static void ble_usart_interface_init()
   
   GPIO_Init(BLE_GPIO, &GPIO_InitStructure);
   
-  GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
+  //GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
   delaynms(200);//延时200ms
   GPIO_SetBits(BLE_GPIO, BLE_ResetPin);//拉高BLE的复位脚:1
   
@@ -196,6 +196,17 @@ void ble_init(void)
   
   ble_usart_interface_init();//蓝牙串口接口初始化
   
+  if(ble_msg_queue_ptr!=NULL)
+  {
+     free(ble_msg_queue_ptr);
+     ble_msg_queue_ptr =NULL;
+  }
+  ble_msg_queue_ptr = malloc(sizeof(ring_queue_t));
+  if(ble_msg_queue_ptr ==NULL)
+  {
+    printf("malloc ble_msg_queue_ptr failure\r\n");
+    return ;
+  }
   init_queue(ble_msg_queue_ptr);
 #else
   
@@ -204,10 +215,9 @@ void ble_init(void)
     gpio_ble_init();
     usart_ble_init();
     
-#endif
-  
-    
     BluetoothRxQue = QueueCreate(80, 1); //这里分配的时候需注意
+    
+ #endif
     
     printf("\r\n  BLE_Interface Configuration Completed  \r\n");
     
@@ -240,8 +250,10 @@ unsigned char ble_receive(Message_t * msg)
     switch(m_parser_state)
     {
       case FIND_START_HEADER_H:
+            if(ch==0xFF){
                g_rx_usart2_msg.Header.Header = ch;
                m_parser_state = FIND_START_HEADER_L;
+            }
         break;
       case FIND_START_HEADER_L:
             g_rx_usart2_msg.Header.Header = ((g_rx_usart2_msg.Header.Header<<8)&0xff00) | ch;

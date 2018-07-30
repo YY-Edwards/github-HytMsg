@@ -59,5 +59,7 @@ typedef struct
 void hrnp_init(void);
 unsigned char hrnp_data(unsigned char * dat, unsigned short length);
 unsigned char hrnp_receive(Hrnp_t * hrnp);
+unsigned char hrnp_connect(void);
+unsigned char hrnp_close(void);
 
 #endif

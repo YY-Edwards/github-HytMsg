@@ -134,6 +134,28 @@ typedef struct
 
 
 
+#define RegisterServiceQuery 0x0C18
+
+#pragma   pack(1)
+typedef struct
+{
+    HdtapHeader_t Header;
+    HdtapEnd_t End;
+    
+}RegisterStatusQuery_req_t;
+
+
+typedef struct
+{
+  HdtapHeader_t        Header;
+  unsigned char       Status;
+  HdtapEnd_t           End;
+  
+}RegisterStatusQuery_reply_t;
+#pragma   pack()
+
+
+
 
 #define DigitalTrunkingBusinessService 0x1C06
 
@@ -247,6 +269,16 @@ typedef struct
 #pragma   pack(1)
 
 
+typedef enum 
+{
+  Success =0,
+  Failure,
+  Unregistered,
+  Low_Battery,
+  Disabled_ID,
+  Disabled_Status_Code
+}MsgSendReplyResult;
+
 typedef struct
 {
     unsigned short Opcode;   
@@ -265,6 +297,9 @@ void TrunkingPowerUpCheck_reply(void *hdtap);
 void RadioIDQuery_req(void *p);
 void RadioIDQuery_reply(void *hdtap);
 
+void RegisterStatusQuery_req(void *p);
+void RegisterStatusQuery_reply(void *hdtap);
+
 void DigitalTrunkingBusinessService_req(void * p);
 void DigitalTrunkingBusinessService_reply(void * hdtap);
 
@@ -273,7 +308,6 @@ void MessageSending_reply(void * hdtap);
 void MessageSendingReq_rec(void * hdtap);
 
 void MessageReceivingReport_rec(void * hdtap);
-
 
 
 #define MAX_HDTAP_EXE_LIST 10
@@ -291,6 +325,7 @@ static const HdtapExe_t HdtapExeList[MAX_HDTAP_EXE_LIST] =
   
   {BRDCST(MessageReceivingReport), MessageReceivingReport_rec},//注意，这里调用准备向蓝牙发送收到的短消息
   
+  {REPLY(RegisterServiceQuery), RegisterStatusQuery_reply},
   
   {MessageSendingReq, MessageSendingReq_rec},
   

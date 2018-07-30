@@ -31,13 +31,13 @@ void ble_send_ack(unsigned op);
 
 typedef enum 
 {
-  FIND_START_HEADER_H =0,
-  FIND_START_HEADER_L,
-  HIGH_ADDR,
-  LOW_ADDR,
-  COMMAND,
-  LENGTH,
-  READ_DATA//包含2bytes的CRC
+  FIND_START_HEADER_H =7,
+  FIND_START_HEADER_L =1,
+  HIGH_ADDR =2,
+  LOW_ADDR =3,
+  COMMAND =4,
+  LENGTH = 5,
+  READ_DATA =6//包含2bytes的CRC
 }PARSERSTATE;
 
 

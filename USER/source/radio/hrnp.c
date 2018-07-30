@@ -4,12 +4,11 @@ static unsigned char GobCurrID = OB_ID_BASS;
 static unsigned short HrnpPN = 0;
 
 static unsigned char IsHrnpConnect = 0;
-
-unsigned char  hrnp_connect(void);
 unsigned char hrnp_close(void);
 
 unsigned char hrnp_close_ack(Hrnp_t *);
 unsigned char hrnp_data_ack(Hrnp_t *);
+bool Radio_Reject_Msg_flag=false;
 
 void hrnp_init(void)
 {
@@ -144,30 +143,12 @@ unsigned char hrnp_receive(Hrnp_t * hrnp)
             hrnp_close_ack(hrnp);
         }
         else if(HRNP_DATA == hrnp->Header.Opcode)
-        {
-            
-            hrnp_data_ack(hrnp);
-            
-            
+        {          
+            hrnp_data_ack(hrnp);          
         }
         else if(HRNP_REJECT == hrnp->Header.Opcode)
         {
-          delaynms(100*10);
-          //u8 ret = hrnp_close();
-          //if(ret == SUCCESS)
-          {
-           // delaynms(100*10);
-            printf("[reconnect radio.] \r\n");
-            Hrnp_t hrnp;
-            hrnp.Header.Opcode = HRNP_CONNECT;
-            hrnp.Header.PN = DEFAULT_PN;
-            hrnp.Header.Length = sizeof(HrnpHeader_t);
-                      
-            hrnp_send(&hrnp);
-            delaynms(100*10);
-            delaynms(100*10);
-            //hrnp_connect();
-          }
+           //printf("[need to reconnect radio.] \r\n");
         }
         else
         {
@@ -233,6 +214,11 @@ unsigned char  hrnp_connect(void)
                         GobCurrID =  hrnp.Header.DestinationID;                     
                         return SUCCESS;
                     }
+                    else if(HRNP_REJECT == hrnp.Header.Opcode)
+                    {    
+                        Radio_Reject_Msg_flag = true;
+                        return FAILURE;
+                    }
                     else
                     {
                          sta = WaitToSend;
@@ -282,6 +268,11 @@ unsigned char hrnp_close(void)
                         HrnpPN += 1;
                         GobCurrID =  hrnp.Header.DestinationID;   
                         return SUCCESS;
+                    }
+                    else if(HRNP_REJECT == hrnp.Header.Opcode)
+                    {    
+                        Radio_Reject_Msg_flag = true;
+                        return FAILURE;
                     }
                     else
                     {
@@ -347,9 +338,14 @@ unsigned char hrnp_data(unsigned char * dat, unsigned short length)
                         GobCurrID =  hrnp.Header.DestinationID;   
                         return SUCCESS;
                     }
+                    else if(HRNP_REJECT == hrnp.Header.Opcode)
+                    {    
+                        Radio_Reject_Msg_flag = true;
+                        return FAILURE;
+                    }
                     else
-                    {                       
-                        sta = WaitToSend;
+                    {
+                      sta = WaitToSend;
                     }
                 }
               break;
