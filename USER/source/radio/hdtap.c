@@ -136,6 +136,10 @@ void TrunkingPowerUpCheck_reply(void *hdtap)
 
 }
 
+
+
+
+
 void RegisterStatusQuery_req(void *p)
 {
 
@@ -217,6 +221,46 @@ void RegisterStatusQuery_reply(void *hdtap)
 
 
 }
+
+
+void SystemModeOperation_req(void *p)
+{
+     SystemModeOperation_req_t  SystemModeOperation_req,  * req = &SystemModeOperation_req;
+    
+    req->Header.MshHdr = HDTAP;
+    req->Header.Opcode.Struct.Mask = REQUEST_MASK;
+    req->Header.Opcode.Struct.Opcode = SystemModeOperation;
+    req->Header.Length = 2;
+    req->Option = SystemModeOperation_Read;
+    req->Mode = SystemMode_DigitalTrunking;//when the "option" is "set", this value is valid;
+   
+    req->End.Checksum = hdtap_checksum(req, req->Header.Length);
+    req->End.MsgEnd = MSH_END; 
+    
+    hrnp_data((void *)req,  sizeof(HdtapHeader_t) + sizeof(HdtapEnd_t));
+
+}
+void SystemModeOperation_reply(void *hdtap)
+{
+    SystemModeOperation_reply_t * reply = (SystemModeOperation_reply_t *)hdtap;
+        
+    if(Hdtap_Sucess == reply->Result)
+    {               
+        //printf("Radio register successful. \r\n");   
+      printf("request system run-mode: \n");  
+      printf("operation: 0x%x\n", reply->Option); 
+      printf("mode: 0x%x\n", reply->Mode); 
+    }
+    else
+    {
+       printf("request system mode failure\r\n");
+    }
+
+
+}
+
+
+
 
 void DigitalTrunkingBusinessService_req(void * p)
 {
@@ -346,6 +390,11 @@ void hdtap_cfg(void)
      
     exe.Opcode = REQUEST(RadioIDQuery);//0x0C02
     exe.HdtapFunc = RadioIDQuery_req;
+    exe.Parameter = NULL;
+    QueuePush(HdtapExecQue, &exe);
+    
+    exe.Opcode = REQUEST(SystemModeOperation);//0x0C10
+    exe.HdtapFunc = SystemModeOperation_req;
     exe.Parameter = NULL;
     QueuePush(HdtapExecQue, &exe);
     

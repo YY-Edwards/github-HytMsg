@@ -154,6 +154,44 @@ typedef struct
 }RegisterStatusQuery_reply_t;
 #pragma   pack()
 
+#define SystemModeOperation             0x0C10
+#define SystemModeOperation_Read        0x00
+#define SystemModeOperation_Set         0x01
+#define SystemMode_Conventional         0x00
+#define SystemMode_DigitalTrunking      0x03
+#define SystemMode_AnalogTrunking       0x02
+
+
+#pragma   pack(1)
+typedef struct
+{
+    HdtapHeader_t Header;
+    unsigned char  Option;
+    unsigned char  Mode;
+    HdtapEnd_t End;
+    
+}SystemModeOperation_req_t;
+
+
+typedef struct
+{
+  HdtapHeader_t        Header;
+  unsigned char  Result;
+  unsigned char  Option;
+  unsigned char  Mode;
+  HdtapEnd_t           End;
+  
+}SystemModeOperation_reply_t;
+#pragma   pack()
+
+
+
+
+
+
+
+
+
 
 
 
@@ -300,6 +338,9 @@ void RadioIDQuery_reply(void *hdtap);
 void RegisterStatusQuery_req(void *p);
 void RegisterStatusQuery_reply(void *hdtap);
 
+void SystemModeOperation_req(void *p);
+void SystemModeOperation_reply(void *hdtap);
+
 void DigitalTrunkingBusinessService_req(void * p);
 void DigitalTrunkingBusinessService_reply(void * hdtap);
 
@@ -326,6 +367,8 @@ static const HdtapExe_t HdtapExeList[MAX_HDTAP_EXE_LIST] =
   {BRDCST(MessageReceivingReport), MessageReceivingReport_rec},//注意，这里调用准备向蓝牙发送收到的短消息
   
   {REPLY(RegisterServiceQuery), RegisterStatusQuery_reply},
+  
+  {REPLY(SystemModeOperation),SystemModeOperation_reply},
   
   {MessageSendingReq, MessageSendingReq_rec},
   

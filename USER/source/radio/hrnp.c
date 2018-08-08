@@ -13,6 +13,12 @@ bool Radio_Reject_Msg_flag=false;
 void hrnp_init(void)
 {
     physical_init();
+    
+    delaynms(500);
+    delaynms(500);
+    delaynms(500);
+    delaynms(500);
+    
     IsHrnpConnect = hrnp_connect();
     printf("Hrnp Connect Finished\r\n");
 }
