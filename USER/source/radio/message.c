@@ -55,7 +55,7 @@ void msg_send( Message_t * msg)
     }
     else
     {
-      printf("[Radio is busying.] \r\n");
+      printf("[Radio is busying.Please hold on!] \r\n");
       //return;
     }
   
