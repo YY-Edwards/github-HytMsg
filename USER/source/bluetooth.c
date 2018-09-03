@@ -19,9 +19,10 @@ static void nvic_ble_init(void)
     /* Configure the NVIC Preemption Priority Bits */  
     //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
     
-    /* Enable the USART3 Interrupt */
+    /* Enable the USART2 Interrupt */
     NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; //先占优先级 2 级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;			//子优先级1
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 }
@@ -157,7 +158,8 @@ static void ble_usart_interface_init()
   
   /* Enable the USART2 Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;			//子优先级1
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; //先占优先级 2 级
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;			//子优先级1
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
 

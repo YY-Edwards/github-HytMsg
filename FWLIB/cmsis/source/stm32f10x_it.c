@@ -44,6 +44,7 @@
  extern unsigned char ble_alive_flag;   
  extern unsigned char  ble_rx_counter;
  extern unsigned char  Ble_send_flag;
+ extern unsigned char  Msg_send_flag;
  extern  u8 USART2_RX_BUFF[USART2_BUFF_LEN];
  extern RingQueue_t ble_msg_queue_ptr;
 //
@@ -121,8 +122,15 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
     static unsigned int counter = 0;
+    static unsigned int ble_counter = 0;
     counter++;
-    if(counter == 5000)//1000ms
+    ble_counter++;
+    if(ble_counter == 1500)//1.5s
+    {
+      ble_counter= 0;
+      Msg_send_flag = 1;
+    }
+    if(counter == 5000)//5s
     {
       counter = 0;
       if(ble_alive_flag)
@@ -131,11 +139,8 @@ void SysTick_Handler(void)
         Ble_send_flag = 1;
       }
     }
-    
-    
-    
+      
     DelayNmsCounter--;
-  
   
 }
 
@@ -395,6 +400,32 @@ void TIM2_IRQHandler(void)
     
     
 }
+
+
+
+/**
+  * @brief  This function handles TIM3 global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void TIM3_IRQHandler(void)
+{
+  Message_t Message, * ble_Msg_ptr = &Message;  
+  
+  if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
+  {
+    if(SUCCESS == ble_receive(ble_Msg_ptr))
+    {
+        printf("\r\n Ble_receive \r\n");
+        msg_send(ble_Msg_ptr);
+    }
+     memset(ble_Msg_ptr, 0x00, sizeof(Message_t));
+    
+   TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+  }
+ }
+
+/******************************************************************************/
 
 
 /******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/

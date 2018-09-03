@@ -168,7 +168,9 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state></state>
+          <state>USE_STDPERIPH_DRIVER</state>
+          <state>STM32F10X_MD</state>
+          <state>USE_STM3210E_EVAL</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
