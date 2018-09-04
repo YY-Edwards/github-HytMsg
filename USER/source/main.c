@@ -43,7 +43,7 @@ int main ( void )
 {  
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//配置中断优先组，统一一次性配置。
     SysTick_Config(SYSTEM_CLOCK / 1000);  //1ms   
-    NVIC_SetPriority(SysTick_IRQn,0);//讲中断优先级设置没最高，无论什么组。  
+    //NVIC_SetPriority(SysTick_IRQn,0);//讲中断优先级设置没最高，无论什么组。  
     
     log_init();
     printf("log initialize finished\r\n");
