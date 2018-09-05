@@ -135,7 +135,7 @@ void SysTick_Handler(void)
       counter = 0;
       if(ble_alive_flag)
       {              
-        ble_send_ack(MSG_ALIVE);
+        ble_send_ack(MSG_ALIVE);//”√µΩ¡Àusart2
         Ble_send_flag = 1;
       }
     }

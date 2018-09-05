@@ -72,7 +72,7 @@ int main ( void )
           ble_send(Msg);
       }
         
-      if(Ble_send_flag)
+      if(Ble_send_flag)//可以将心跳放到这里，要求不严格的情况下
       {
           Ble_send_flag = 0;
           Ble_alive_counter++;
