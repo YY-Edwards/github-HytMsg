@@ -3,6 +3,8 @@
 Queue_t HdtapExecQue = NULL;
 
 static unsigned int RadioID  = 0;
+static unsigned int Master_Turnking_ID  = 0x00FC02B2;
+bool trunking_msg_send_okay_flag= true;
 
 unsigned char hdtap_checksum(void * hdtap,  unsigned int PayloadLen)
 {
@@ -42,14 +44,15 @@ void MessageSendingRequest(void * p)
     op.DTBS.H_Opcode = 0x0c;
     
     req->Header.Opcode.Store = op.Store;//0x0c08
-       
-    if(msg->Header.Length >= 200)req->Header.Length = 200;//如果ble发过来的数据超过200bytes,则留两个字节给END
+    
+    //集群模式最大可发送248bytes的负载数据
+    if(msg->Header.Length >= 248)req->Header.Length = 248;//如果ble发过来的数据超过200bytes,则留两个字节给END
     else
       req->Header.Length = (msg->Header.Length + 8);//TargetID[4]+CallType[1]+Option[1]+Datalen[2]+Msg[Datalen]
     
     /**Target radio ID (air interface value) which a message to be sent to**/
     //req->TargetID = ID2IP(2);
-    req->TargetID = RadioID ;
+    req->TargetID = Master_Turnking_ID;//RadioID ;
     //req->DestIP = htonl(ID2IP(msg->Header.Address));
     
     printf("[RECEIVE BLE MSG AND SEND TO TargetID: 0x%08X]\r\n", req->TargetID); 
@@ -76,7 +79,7 @@ void MessageSendingRequest(void * p)
           
           }
     
-    memset(&(req->TMData[msg->Header.Length]), 0x00, 512-msg->Header.Length);//TMData未用的部分清零。
+    memset(&(req->TMData[msg->Header.Length]), 0x00, Hdtap_Msg_Payload_Len-msg->Header.Length);//TMData未用的部分清零。
 
   
     //注意地址
@@ -393,10 +396,10 @@ void hdtap_cfg(void)
     exe.Parameter = NULL;
     QueuePush(HdtapExecQue, &exe);
     
-    exe.Opcode = REQUEST(SystemModeOperation);//0x0C10
-    exe.HdtapFunc = SystemModeOperation_req;
-    exe.Parameter = NULL;
-    QueuePush(HdtapExecQue, &exe);
+//    exe.Opcode = REQUEST(SystemModeOperation);//0x0C10
+//    exe.HdtapFunc = SystemModeOperation_req;
+//    exe.Parameter = NULL;
+//    QueuePush(HdtapExecQue, &exe);
     
     exe.Opcode = REQUEST(RegisterServiceQuery);//0x0C18
     exe.HdtapFunc = RegisterStatusQuery_req;
@@ -501,6 +504,8 @@ void MessageSending_reply(void * hdtap)
      switch(reply->Result)
     {
         case Success:
+              
+              trunking_msg_send_okay_flag = true;
               printf("Message Send Service: Success.\r\n");
         break;
         

@@ -6,7 +6,8 @@
 
 #include "lib/myqueue.h"
 #include "radio/message.h"
-#define USART2_BUFF_LEN 128
+#define BLE_PAYLOAD_MAX_LEN     248
+#define USART2_BUFF_LEN         256
 #define USART2_GPIO              GPIOA
 #define USART2_CLK               RCC_APB1Periph_USART2
 #define USART2_GPIO_CLK          RCC_APB2Periph_GPIOA

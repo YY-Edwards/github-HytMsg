@@ -46,10 +46,27 @@ void msg_receive_event(void * msg)
 }
 extern bool Radio_Reject_Msg_flag;
 extern bool msg_allowed_send_flag;
+extern bool trunking_msg_send_okay_flag;
 void msg_send( Message_t * msg)
 {
   
-    if(msg_allowed_send_flag == true)
+#ifdef TRUNKING_MODE
+    
+ if(trunking_msg_send_okay_flag == true)
+  {
+    trunking_msg_send_okay_flag = false;
+  }
+  else
+  {
+    printf("[Radio is busying.Please hold on!] \r\n");
+    //return;
+  }
+  
+  MessageSendingRequest(msg);
+
+#else
+  
+   if(msg_allowed_send_flag == true)
     {
       msg_allowed_send_flag = false;
     }
@@ -58,12 +75,6 @@ void msg_send( Message_t * msg)
       printf("[Radio is busying.Please hold on!] \r\n");
       //return;
     }
-  
-#ifdef TRUNKING_MODE
-  
-  MessageSendingRequest(msg);
-
-#else
   
   if(msg->Header.Address == 0xFFBA)GroupMessage_transfer(msg);
     else//peer to peer

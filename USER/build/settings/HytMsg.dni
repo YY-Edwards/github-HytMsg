@@ -1,5 +1,5 @@
 [DebugChecksum]
-Checksum=-1387071522
+Checksum=1267049943
 [Stack]
 FillEnabled=0
 OverflowWarningsEnabled=1
@@ -20,26 +20,18 @@ ShowArgs=0
 [Disassembly]
 MixedMode=1
 [struct_types]
-Fmt0=HdpepEnd_t-Checksum	4	0
-Fmt1=HdpepEnd_t-MsgEnd	4	0
-Fmt2=HdpepHeader_t-Length	4	0
-Fmt3=HdpepHeader_t-MshHdr	4	0
-Fmt4=HdpepOpcode_t-Store	4	0
-Fmt5=HrnpHeader_t-CheckSum	4	0
-Fmt6=HrnpHeader_t-PN	4	0
-Fmt7=MessageHeader_t-Address	4	0
-Fmt8=MessageHeader_t-Header	4	0
-Fmt9=MessageHeader_t-Length	4	0
-Fmt10=MessageHeader_t-Opcode	4	0
-Fmt11=Message_ack_t-Checksum	4	0
-Fmt12=Message_t-Checksum	4	0
-Fmt13=OB_Message_t-TMLen	4	0
-Fmt14=OB_Message_t-dest	4	0
-Fmt15=OB_Message_t-src	4	0
-Fmt16=OB_Message_t-type	4	0
-Fmt17=OpcodeStruct_t-Mask	4	0
-Fmt18=OpcodeStruct_t-Opcode	4	0
-Fmt19=OpcodeTMS_t-Opcode	4	0
+Fmt0=HrnpHeader_t-CheckSum	4	0
+Fmt1=HrnpHeader_t-PN	4	0
+Fmt2=MessageHeader_t-Address	4	0
+Fmt3=MessageHeader_t-Header	4	0
+Fmt4=MessageHeader_t-Length	4	0
+Fmt5=MessageHeader_t-Opcode	4	0
+Fmt6=Message_ack_t-Checksum	4	0
+Fmt7=Message_t-Checksum	4	0
+Fmt8=OB_Message_t-TMLen	4	0
+Fmt9=OB_Message_t-dest	4	0
+Fmt10=OB_Message_t-src	4	0
+Fmt11=OB_Message_t-type	4	0
 [array_types]
 Fmt0=u8[200]	4	0
 Fmt1=unsigned char[1000]	4	0
@@ -61,6 +53,12 @@ Fmt9={W}0:temp_2	4	0
 Fmt10={W}1:SrcIP	4	0
 Fmt11={W}1:Sumofdata	4	0
 Fmt12={W}1:ts	4	0
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.41.4" 0 0 1 "" 0 "" 0
+Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\main.c}.44.5" 0 0 1 "" 0 "" 0
+Count=2
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -68,6 +66,9 @@ Category=_ 0
 [TermIOLog]
 LoggingEnabled=_ 0
 LogFile=_ ""
+[Aliases]
+Count=0
+SuppressDialog=0
 [CallStackLog]
 Enabled=0
 [DriverProfiling]
@@ -76,11 +77,3 @@ Mode=0
 Graph=0
 Symbiont=0
 Exclusions=
-[Disassemble mode]
-mode=0
-[Breakpoints2]
-Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\App\app.c}.41.4" 0 0 1 "" 0 "" 0
-Count=1
-[Aliases]
-Count=0
-SuppressDialog=0

@@ -19,7 +19,7 @@
 #define HRNP_DATA 0x00
 #define HRNP_DATA_ACK 0x10
 
-#define MAX_PAYLOAD_SIZE 540 // text message has 256 uncode charestr 
+#define MAX_PAYLOAD_SIZE 1024 //540 // text message has 256 uncode charestr 
 
 typedef enum
 {

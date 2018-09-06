@@ -228,7 +228,7 @@ void ble_init(void)
 
 
  extern unsigned char  ble_rx_counter;
-u8 g_usart_recv_buf[200]={0};//全局变量
+u8 g_usart_recv_buf[256]={0};//全局变量
 Message_t g_rx_usart2_msg;
 unsigned char ble_receive(Message_t * msg)
 {
@@ -282,9 +282,9 @@ unsigned char ble_receive(Message_t * msg)
       case LENGTH:
           g_rx_usart2_msg.Header.Length = ch; 
           usart2_recv_msg_len = ch;
-          if(usart2_recv_msg_len > 60)
+          if(usart2_recv_msg_len > BLE_PAYLOAD_MAX_LEN)
           {
-            usart2_recv_msg_len = 60;
+            usart2_recv_msg_len = BLE_PAYLOAD_MAX_LEN;
             ble_send_ack(MSG_NACK);                       
             printf("Usart2 recv data msg length is error  \r\n");
           }

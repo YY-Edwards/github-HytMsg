@@ -26,6 +26,7 @@
 #define Hdtap_Sucess 0x00
 #define Hdtap_failure 0x01
 
+#define Hdtap_Msg_Payload_Len 514
 
 typedef enum
 {
@@ -255,7 +256,7 @@ typedef struct
   unsigned char         CallType;
   unsigned char         Option;
   unsigned short        Datalen;
-  unsigned char         TMData[512];//
+  unsigned char         TMData[Hdtap_Msg_Payload_Len];//集群数据负载
   //unsigned char         *TMData;//可以吗？不可以
   
   HdtapEnd_t              End;

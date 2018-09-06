@@ -3,7 +3,7 @@
 
 
 //是否启用集群模式
-//#define  TRUNKING_MODE
+#define  TRUNKING_MODE
 
 #ifdef  TRUNKING_MODE
   #include "radio/hdtap.h"
@@ -21,7 +21,7 @@
 #define MSG_ALIVE 0x02
 #define MSG_NACK 0xFF
 
-#define MAX_MSG_DATA_SIZE 62//多出的两个字节用来存储checksum数据
+#define MAX_MSG_DATA_SIZE  248 //62//多出的两个字节用来存储checksum数据
 #define Msg_Header 0xFFFE
 
 

@@ -208,7 +208,7 @@ void RadioidAndRadioipQuery_req(void *p)
     req->Header.Opcode.Struct.Opcode = RadioidAndRadioipQuery;
     req->Header.Length = 1;
     
-    req->Traget = Radio_IP;//Radio_ID;//Radio_IP;
+    req->Traget = Radio_ID;//Radio_ID;//Radio_IP;
    
     req->End.Checksum = hdpep_checksum(req, req->Header.Length);
     req->End.MsgEnd = MSH_END; 
