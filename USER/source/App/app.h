@@ -11,7 +11,7 @@ typedef struct
   unsigned int dest;
   unsigned int src;
   unsigned short TMLen;
-  unsigned char TMData[512];
+  unsigned char TMData[1002];
   
   
 }OB_Message_t;

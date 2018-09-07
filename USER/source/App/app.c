@@ -33,7 +33,7 @@ void app_rec_msg(OB_Message_t * msg)
    Msg.Header.Length = msg->TMLen;
    
    memcpy(&(Msg.Payload), msg->TMData, Msg.Header.Length);
-   memset(&(Msg.Payload[Msg.Header.Length]), 0x00, 60-Msg.Header.Length);
+   memset(&(Msg.Payload[Msg.Header.Length]), 0x00, 248-Msg.Header.Length);
    
    
    
@@ -48,6 +48,4 @@ void app_rec_msg(OB_Message_t * msg)
          
   QueuePush(MsgRxQue, &Msg);
   
-  
-
 }

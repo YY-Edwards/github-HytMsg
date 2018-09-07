@@ -221,7 +221,7 @@ void ble_init(void)
     
  #endif
     
-    printf("\r\n  BLE_Interface Configuration Completed  \r\n");
+    printf("\r\n BLE_Interface Configuration Completed  \r\n");
     
 }
 

@@ -21,7 +21,7 @@ void msg_init(void)
 #endif
     
    
-    MsgRxQue = QueueCreate(10, sizeof(Ble_Message_Pro_t));
+    MsgRxQue = QueueCreate(3, sizeof(Ble_Message_Pro_t));
     
     
 }
@@ -35,14 +35,14 @@ void msg_receive_event(void * msg)
 //    
 //    unsigned short rxcheck = *(unsigned short*)((unsigned char *)msg + sizeof(MessageHeader_t) + p->Length);
 //    if( rxcheck == msg_checksum(msg))
-    {
-        Ble_Message_Pro_t Msg;
-        
-        memcpy(&Msg, msg, sizeof(Ble_Message_Pro_t));
-        
-        //memcpy(&Msg, msg, sizeof(MessageHeader_t) + p->Length + 2);
-        QueuePush(MsgRxQue, &Msg);
-    }
+//    {
+//        Ble_Message_Pro_t Msg;
+//        
+//        memcpy(&Msg, msg, sizeof(Ble_Message_Pro_t));
+//        
+//        //memcpy(&Msg, msg, sizeof(MessageHeader_t) + p->Length + 2);
+//        QueuePush(MsgRxQue, &Msg);
+//    }
 }
 extern bool Radio_Reject_Msg_flag;
 extern bool msg_allowed_send_flag;

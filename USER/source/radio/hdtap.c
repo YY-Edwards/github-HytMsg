@@ -3,7 +3,7 @@
 Queue_t HdtapExecQue = NULL;
 
 static unsigned int RadioID  = 0;
-static unsigned int Master_Turnking_ID  = 0x00FC02B2;
+static unsigned int Master_Turnking_ID  = 0x00FC02B2;//南方电网基站集群下的ID号
 bool trunking_msg_send_okay_flag= true;
 
 unsigned char hdtap_checksum(void * hdtap,  unsigned int PayloadLen)
@@ -46,7 +46,7 @@ void MessageSendingRequest(void * p)
     req->Header.Opcode.Store = op.Store;//0x0c08
     
     //集群模式最大可发送248bytes的负载数据
-    if(msg->Header.Length >= 248)req->Header.Length = 248;//如果ble发过来的数据超过200bytes,则留两个字节给END
+    if(msg->Header.Length >= 248)req->Header.Length = (248+8);//如果ble发过来的数据超过248bytes,则留两个字节给END
     else
       req->Header.Length = (msg->Header.Length + 8);//TargetID[4]+CallType[1]+Option[1]+Datalen[2]+Msg[Datalen]
     
@@ -70,35 +70,32 @@ void MessageSendingRequest(void * p)
     unsigned char temp =0;
  
     for(i=0 ; i<msg->Header.Length; )
-          {
-            //将Ble发过来的短信数据每两个字节进行大小端转换为Radio可以识别大端的unicode码
-            temp = req->TMData[i];
-            req->TMData[i] = req->TMData[i+1];
-            req->TMData[i+1] = temp;
-            i+=2;
-          
-          }
+    {
+      //将Ble发过来的短信数据每两个字节进行大小端转换为Radio可以识别大端的unicode码
+      temp = req->TMData[i];
+      req->TMData[i] = req->TMData[i+1];
+      req->TMData[i+1] = temp;
+      i+=2;
     
-    memset(&(req->TMData[msg->Header.Length]), 0x00, Hdtap_Msg_Payload_Len-msg->Header.Length);//TMData未用的部分清零。
+    }
+    
+    memset(&(req->TMData[msg->Header.Length]), 0x00, Hdtap_Msg_Payload_Len-(msg->Header.Length));//TMData未用的部分清零。
 
   
     //注意地址
     req->End.Checksum =  hdtap_checksum(req, req->Header.Length);
     req->End.MsgEnd = MSH_END;
       
-    //协议结构处理,将checksum 和msgend 贴在TMData的末尾以便传输。
-      req->TMData[msg->Header.Length] =  req->End.Checksum; 
-      req->TMData[msg->Header.Length+1] =  req->End.MsgEnd; 
+  //协议结构处理,将checksum 和msgend 贴在TMData的末尾以便传输。
+    req->TMData[msg->Header.Length] =  req->End.Checksum; 
+    req->TMData[msg->Header.Length+1] =  req->End.MsgEnd; 
       
     //HdtapEnd_t * end = (HdtapEnd_t *)((unsigned char *)req + sizeof(HdtapHeader_t) + msg->Header.Length);
     
     //end->Checksum = hdtap_checksum(req, htons(req->Header.Length));
     //end->MsgEnd = MSH_END; 
-
-    
+  
     hrnp_data((void *)req,  sizeof(HdtapHeader_t) + sizeof(HdtapEnd_t) + msg->Header.Length + 8);
-
-
 
 }
 
@@ -559,8 +556,7 @@ void MessageReceivingReport_rec(void * hdtap)
   
 //    rec->RequestID = htonl(rec->RequestID);
 //    rec->DestIP = htonl(rec->DestIP);
-//    rec->SrcIP = htonl(rec->SrcIP);
-       
+//    rec->SrcIP = htonl(rec->SrcIP);      
 //    if(ACK_Required == rec->Header.Opcode.TMS.Ack)
 //    {
 //        PrivateMessage_sendack(rec);
@@ -598,16 +594,15 @@ void MessageReceivingReport_rec(void * hdtap)
     if(rxcheck == rec->End.Checksum)
     {
       //注意测试一下结构
-      OB_Ble_Message_Pro_t Msg;
+      OB_Message_t Msg;
       
       Msg.type = TrunkingMsg;
       Msg.dest = RadioID;//连接的时候从本地Radio获取
       Msg.src = rec->SourceID;
       Msg.TMLen = rec->Datalen;
       
-      memcpy(Msg.TMData, rec->MsgData, Msg.TMLen);
-      
-      memset(&(Msg.TMData[Msg.TMLen]), 0x00, 512 - Msg.TMLen );//剩余部分清零
+      memcpy(Msg.TMData, rec->MsgData, Msg.TMLen);    
+      memset(&(Msg.TMData[Msg.TMLen]), 0x00, 1002 - Msg.TMLen );//剩余部分清零
       
       unsigned char i =0;
       unsigned char temp =0;
@@ -621,10 +616,8 @@ void MessageReceivingReport_rec(void * hdtap)
         i+=2;
       
       }
-      
-      
-      app_rec_msg(&Msg);
-          
+            
+      app_rec_msg(&Msg);         
     }
     else{
       
@@ -637,13 +630,13 @@ void MessageReceivingReport_rec(void * hdtap)
 }
 
 
-void MessageSendingReq_rec(void * hdtap)
-{
-  /*收到中继台发过来的短消息准备发送给BLE设备，并回复Reply*/
-  //待调试
-  printf("OB-Rx：Message Req \r\n ");
-
-}
+//void MessageSendingReq_rec(void * hdtap)
+//{
+//  /*收到中继台发过来的短消息准备发送给BLE设备，并回复Reply*/
+//  //待调试
+//  printf("OB-Rx：Message Req \r\n ");
+//
+//}
 
 
 

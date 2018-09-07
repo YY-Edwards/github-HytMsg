@@ -258,7 +258,6 @@ typedef struct
   unsigned short        Datalen;
   unsigned char         TMData[Hdtap_Msg_Payload_Len];//集群数据负载
   //unsigned char         *TMData;//可以吗？不可以
-  
   HdtapEnd_t              End;
   
 }TrunkingMessage_req_t;
@@ -298,7 +297,7 @@ typedef struct
   unsigned int          GroupID;//This value is invalid for private message
   unsigned int          SourceID;
  
-  unsigned char         MsgData[1000];
+  unsigned char         MsgData[1002];
 
   
   HdtapEnd_t              End;
@@ -372,7 +371,7 @@ static const HdtapExe_t HdtapExeList[MAX_HDTAP_EXE_LIST] =
   
   {REPLY(SystemModeOperation),SystemModeOperation_reply},
   
-  {MessageSendingReq, MessageSendingReq_rec},
+  //{MessageSendingReq, MessageSendingReq_rec},
   
   
 };

@@ -553,8 +553,7 @@ void GroupMessage_rec(void * hdpep)
     
     printf("[RECEIVE GROUP MSG FORM GROUP %d]\r\n", IP2ID(rec->SrcIP)); 
     
-    msg_receive_event(rec->TMData);
-    
+//    msg_receive_event(rec->TMData);
 //    Ble_Message_Pro_t Msg;
 //    Msg.type = GroupMsg;
 //    Msg.dest = rec->GroupID;

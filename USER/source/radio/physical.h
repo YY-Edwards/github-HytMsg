@@ -25,7 +25,7 @@
 
 
 #define MAX_TX_DEEP 256
-#define MAX_RX_DEEP 512
+#define MAX_RX_DEEP 1024
 
 extern Queue_t UsartTxQue;
 extern Queue_t UsartRxQue;
