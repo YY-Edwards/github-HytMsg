@@ -298,7 +298,7 @@ typedef struct
   unsigned int          GroupID;//This value is invalid for private message
   unsigned int          SourceID;
  
-  unsigned char         MsgData[242];
+  unsigned char         MsgData[1000];
 
   
   HdtapEnd_t              End;
@@ -329,6 +329,7 @@ typedef struct
 
 void hdtap_init(void);
 void hdtap_cfg(void);
+void hdtap_exe( void * hdtap);
 
 void TrunkingPowerUpCheck_req(void * p);
 void TrunkingPowerUpCheck_reply(void *hdtap);

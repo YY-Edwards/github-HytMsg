@@ -32,7 +32,7 @@ void MessageSendingRequest(void * p)
   
   /***需要调整协议**/
   
-    Message_t * msg = (Message_t *)p;
+    Ble_Message_Pro_t * msg = (Ble_Message_Pro_t *)p;
     
     TrunkingMessage_req_t TrunkingMessage_req, *req = &TrunkingMessage_req;
     
@@ -595,35 +595,35 @@ void MessageReceivingReport_rec(void * hdtap)
     
     //checksum Hdtap data
     unsigned char rxcheck = hdtap_checksum(rec, rec->Header.Length);
-    if( rxcheck == rec->End.Checksum)
+    if(rxcheck == rec->End.Checksum)
     {
-          //注意测试一下结构
-          OB_Message_t Msg;
-          
-          Msg.type = TrunkingMsg;
-          Msg.dest = RadioID;//连接的时候从本地Radio获取
-          Msg.src = rec->SourceID;
-          Msg.TMLen = rec->Datalen;
-          
-          memcpy(Msg.TMData, rec->MsgData, Msg.TMLen);
-          
-          memset(&(Msg.TMData[Msg.TMLen]), 0x00, 512 - Msg.TMLen );//剩余部分清零
-          
-          unsigned char i =0;
-          unsigned char temp =0;
-          
-          for(i=0 ; i<Msg.TMLen; )
-          {
-            //将radio发过来的短信数据每两个字节进行大小端转换为正常的unicode码
-            temp = Msg.TMData[i];
-            Msg.TMData[i] = Msg.TMData[i+1];
-            Msg.TMData[i+1] = temp;
-            i+=2;
-          
-          }
-          
-          
-          app_rec_msg(&Msg);
+      //注意测试一下结构
+      OB_Ble_Message_Pro_t Msg;
+      
+      Msg.type = TrunkingMsg;
+      Msg.dest = RadioID;//连接的时候从本地Radio获取
+      Msg.src = rec->SourceID;
+      Msg.TMLen = rec->Datalen;
+      
+      memcpy(Msg.TMData, rec->MsgData, Msg.TMLen);
+      
+      memset(&(Msg.TMData[Msg.TMLen]), 0x00, 512 - Msg.TMLen );//剩余部分清零
+      
+      unsigned char i =0;
+      unsigned char temp =0;
+      
+      for(i=0 ; i<Msg.TMLen; )
+      {
+        //将radio发过来的短信数据每两个字节进行大小端转换为正常的unicode码
+        temp = Msg.TMData[i];
+        Msg.TMData[i] = Msg.TMData[i+1];
+        Msg.TMData[i+1] = temp;
+        i+=2;
+      
+      }
+      
+      
+      app_rec_msg(&Msg);
           
     }
     else{
@@ -634,11 +634,6 @@ void MessageReceivingReport_rec(void * hdtap)
     
     }
     
-  
-  
-  
-
-
 }
 
 

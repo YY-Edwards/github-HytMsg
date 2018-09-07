@@ -229,8 +229,8 @@ void ble_init(void)
 
  extern unsigned char  ble_rx_counter;
 u8 g_usart_recv_buf[256]={0};//全局变量
-Message_t g_rx_usart2_msg;
-unsigned char ble_receive(Message_t * msg)
+Ble_Message_Pro_t g_rx_usart2_msg;
+unsigned char ble_receive(Ble_Message_Pro_t * msg)
 {
   
 #if 1
@@ -399,7 +399,7 @@ unsigned char ble_receive(Message_t * msg)
      //因为把数据做大小端变化后会影响校验函数的结果.
      //校验数据包括：地址，命令，长度和数据
      
-     if((Counter <= sizeof(Message_t)) && (Msg_Header == htons(msg->Header.Header)))
+     if((Counter <= sizeof(Ble_Message_Pro_t)) && (Msg_Header == htons(msg->Header.Header)))
       {
             
             switch(msg->Header.Opcode)
@@ -453,7 +453,7 @@ unsigned char ble_receive(Message_t * msg)
       }
      else
       {
-        if(Counter > sizeof(Message_t))printf("\r\n  Packge_length_Over  \r\n"); 
+        if(Counter > sizeof(Ble_Message_Pro_t))printf("\r\n  Packge_length_Over  \r\n"); 
         else
          printf("\r\n  Error Packge  \r\n"); 
         
@@ -517,7 +517,7 @@ unsigned char ble_receive(Message_t * msg)
 //   return FAILURE; 
 }
 
-void ble_send(Message_t * msg)
+void ble_send(Ble_Message_Pro_t * msg)
 {
      //if(Msg_Header != msg->Header.Header)return;
       
@@ -541,7 +541,7 @@ void ble_send_ack(unsigned op)
      ack.Header.Address = 0; 
      ack.Header.Length = 0;
      ack.Header.Opcode = op;
-     ack.Checksum = msg_checksum((Message_t *)&ack);
+     ack.Checksum = msg_checksum((Ble_Message_Pro_t *)&ack);
      
-     ble_send((Message_t *)&ack);
+     ble_send((Ble_Message_Pro_t *)&ack);
 }

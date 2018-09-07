@@ -105,7 +105,7 @@ static void usart_log_init(void)
     USART_InitTypeDef USART_InitStructure;
     
     //注意此处目前波特率最大设定为19200，原因在排查中
-    USART_InitStructure.USART_BaudRate = 19200;               /*设置波特率为115200*/
+    USART_InitStructure.USART_BaudRate = 38400;               /*设置波特率为115200*/
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;/*设置数据位为8*/
     USART_InitStructure.USART_StopBits = USART_StopBits_1;     /*设置停止位为1位*/
     USART_InitStructure.USART_Parity = USART_Parity_No;        /*无奇偶校验*/

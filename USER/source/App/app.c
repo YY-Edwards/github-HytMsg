@@ -10,7 +10,7 @@ void app_rec_msg(OB_Message_t * msg)
   
   /******/
 
-   Message_t Msg;
+   Ble_Message_Pro_t Msg;
    
    //IAR是小端存储数据,即低位在前，高位在后。而与蓝牙协议中需要变换为高位在前，低位在后。
    /*例如:IAR中数据 0xfffe :0xfe  0xff 。则先发送oxfe,再发送0xff*/
@@ -27,8 +27,8 @@ void app_rec_msg(OB_Message_t * msg)
    
    Msg.Header.Opcode = 0x01;
    
-   //最大为60bytes
-   if(msg->TMLen >= 60)Msg.Header.Length = 0x3c;//60bytes
+   //最大为248bytes
+   if(msg->TMLen >= 248)Msg.Header.Length = 248;//248bytes
    else
    Msg.Header.Length = msg->TMLen;
    
@@ -37,7 +37,7 @@ void app_rec_msg(OB_Message_t * msg)
    
    
    
-   Msg.Checksum = msg_checksum((Message_t *)&Msg);
+   Msg.Checksum = msg_checksum((Ble_Message_Pro_t *)&Msg);
    Msg.Checksum = htons(Msg.Checksum);
    
    //协议结构处理

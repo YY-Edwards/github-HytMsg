@@ -42,7 +42,7 @@ typedef struct
     MessageHeader_t Header;
     unsigned char Payload[MAX_MSG_DATA_SIZE];
     unsigned short Checksum;
-}Message_t;
+}Ble_Message_Pro_t;
 
 typedef struct
 {
@@ -55,10 +55,10 @@ typedef struct
 #pragma pack()
 
 
-unsigned short msg_checksum(Message_t * msg);
+unsigned short msg_checksum(Ble_Message_Pro_t * msg);
 
 void msg_init(void);
-void msg_send( Message_t * msg);
-unsigned char  msg_receive(Message_t * msg);
+void msg_send( Ble_Message_Pro_t * msg);
+unsigned char  msg_receive(Ble_Message_Pro_t * msg);
 void msg_receive_event(void * msg);
 #endif

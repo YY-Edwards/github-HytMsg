@@ -277,7 +277,7 @@ void PrivateMessage_trans(void * p)
 {       
     static unsigned int req_id = 1;
     
-    Message_t * msg = (Message_t *)p;
+    Ble_Message_Pro_t * msg = (Ble_Message_Pro_t *)p;
     PrivateMessage_trans_t PrivateMessage_trans, *req = &PrivateMessage_trans;
     
     memset(req, 0x00, sizeof(PrivateMessage_trans_t));//clear 
@@ -473,7 +473,7 @@ void GroupMessage_transfer(void * p)
 {       
     static unsigned int req_id = 1;
     
-    Message_t * msg = (Message_t *)p;
+    Ble_Message_Pro_t * msg = (Ble_Message_Pro_t *)p;
     GroupMessage_trans_t groupmsg_trans, *req = &groupmsg_trans;
     
     req->Header.MshHdr = HDPEP_TMP;
@@ -555,7 +555,7 @@ void GroupMessage_rec(void * hdpep)
     
     msg_receive_event(rec->TMData);
     
-//    Message_t Msg;
+//    Ble_Message_Pro_t Msg;
 //    Msg.type = GroupMsg;
 //    Msg.dest = rec->GroupID;
 //    Msg.src = IP2ID(rec->SrcIP);

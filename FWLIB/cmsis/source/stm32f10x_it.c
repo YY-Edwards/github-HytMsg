@@ -133,11 +133,7 @@ void SysTick_Handler(void)
     if(counter == 5000)//5s
     {
       counter = 0;
-      if(ble_alive_flag)
-      {              
-        ble_send_ack(MSG_ALIVE);//”√µΩ¡Àusart2
-        Ble_send_flag = 1;
-      }
+      Ble_send_flag = 1;
     }
       
     DelayNmsCounter--;
@@ -410,7 +406,7 @@ void TIM2_IRQHandler(void)
   */
 void TIM3_IRQHandler(void)
 {
-  Message_t Message, * ble_Msg_ptr = &Message;  
+  Ble_Message_Pro_t Message, * ble_Msg_ptr = &Message;  
   
   if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
   {
@@ -419,7 +415,7 @@ void TIM3_IRQHandler(void)
         printf("\r\n Ble_receive \r\n");
         msg_send(ble_Msg_ptr);
     }
-     memset(ble_Msg_ptr, 0x00, sizeof(Message_t));
+     memset(ble_Msg_ptr, 0x00, sizeof(Ble_Message_Pro_t));
     
    TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
   }

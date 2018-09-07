@@ -53,33 +53,38 @@ int main ( void )
     
     //TIM3_Int_Init(9999,7199);//timer3,定时1s
   
-    Message_t Message, * Msg = &Message;    
+    Ble_Message_Pro_t Message, * Msg = &Message;    
     
     for(;;)
     { 
-      if(Msg_send_flag)
+      if(Msg_send_flag)//短信发送定时触发
       {
         Msg_send_flag = 0;
-        if(SUCCESS == ble_receive(Msg))
+        if(SUCCESS == ble_receive(Msg))//如果蓝牙模块收到数据
         {
             printf("\r\n Ble_receive \r\n");
-            msg_send(Msg);
+            msg_send(Msg);//手台发送
         }
       }
       
-      if(SUCCESS == msg_receive(Msg))
+      if(SUCCESS == msg_receive(Msg))//如果手台有短信数据
       {
-          ble_send(Msg);
+          ble_send(Msg);//蓝牙发送
       }
         
-      if(Ble_send_flag)//可以将心跳放到这里，要求不严格的情况下
-      {
-          Ble_send_flag = 0;
-          Ble_alive_counter++;
-          if(ble_alive_flag)printf("\r\n B_alive:%d \r\n", Ble_alive_counter);
-        
+      
+       if(ble_alive_flag)//心跳使能
+      {              
+        if(Ble_send_flag)//定时触发，可以将心跳放到这里，要求不严格的情况下
+        {
+            Ble_send_flag = 0;
+            ble_send_ack(MSG_ALIVE);
+            Ble_alive_counter++;
+            if(ble_alive_flag)printf("\r\n B_alive:%d \r\n", Ble_alive_counter);
+          
+        }
       }
-      memset(Msg, 0x00, sizeof(Message_t));//clear buff
+      memset(Msg, 0x00, sizeof(Ble_Message_Pro_t));//clear buff
 
     } 
   

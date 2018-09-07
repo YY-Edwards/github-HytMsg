@@ -25,8 +25,8 @@
 extern Queue_t BluetoothRxQue;
 
 void ble_init(void);
-void ble_send(Message_t * msg);
-unsigned char ble_receive(Message_t * msg);
+void ble_send(Ble_Message_Pro_t * msg);
+unsigned char ble_receive(Ble_Message_Pro_t * msg);
 
 void ble_send_ack(unsigned op);
 

@@ -21,7 +21,7 @@ void msg_init(void)
 #endif
     
    
-    MsgRxQue = QueueCreate(10, sizeof(Message_t));
+    MsgRxQue = QueueCreate(10, sizeof(Ble_Message_Pro_t));
     
     
 }
@@ -30,15 +30,15 @@ void msg_receive_event(void * msg)
   //直接就转发了，没有做数据判断
 ////    MessageHeader_t * p = (MessageHeader_t *)msg;
 //    if(Msg_Header != p->Header)return;
-//    if(sizeof(Message_t) <= sizeof(MessageHeader_t) + p->Length + 2 )return;
+//    if(sizeof(Ble_Message_Pro_t) <= sizeof(MessageHeader_t) + p->Length + 2 )return;
 //    
 //    
 //    unsigned short rxcheck = *(unsigned short*)((unsigned char *)msg + sizeof(MessageHeader_t) + p->Length);
 //    if( rxcheck == msg_checksum(msg))
     {
-        Message_t Msg;
+        Ble_Message_Pro_t Msg;
         
-        memcpy(&Msg, msg, sizeof(Message_t));
+        memcpy(&Msg, msg, sizeof(Ble_Message_Pro_t));
         
         //memcpy(&Msg, msg, sizeof(MessageHeader_t) + p->Length + 2);
         QueuePush(MsgRxQue, &Msg);
@@ -47,7 +47,7 @@ void msg_receive_event(void * msg)
 extern bool Radio_Reject_Msg_flag;
 extern bool msg_allowed_send_flag;
 extern bool trunking_msg_send_okay_flag;
-void msg_send( Message_t * msg)
+void msg_send( Ble_Message_Pro_t * msg)
 {
   
 #ifdef TRUNKING_MODE
@@ -115,7 +115,7 @@ void msg_send( Message_t * msg)
     
 }
 
-unsigned char  msg_receive(Message_t * msg)
+unsigned char  msg_receive(Ble_Message_Pro_t * msg)
 {  
   unsigned char temp_data[MAX_PAYLOAD_SIZE]={0};
     
@@ -205,9 +205,9 @@ unsigned int CRC16_2(unsigned char *buf, int len)
 }
 
 
-unsigned short msg_checksum(Message_t * msg)
+unsigned short msg_checksum(Ble_Message_Pro_t * msg)
 {
   unsigned char temp[255]={0};
-  memcpy(temp, (void *)msg, sizeof(Message_t));
+  memcpy(temp, (void *)msg, sizeof(Ble_Message_Pro_t));
   return CRC16_2(&temp[2], msg->Header.Length + 4) & 0xFFFF;
 }

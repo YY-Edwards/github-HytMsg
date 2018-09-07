@@ -173,7 +173,7 @@ typedef struct
 //    unsigned int src;
 //    unsigned char TMData[MAX_TXT_LEN];
 //    unsigned short TMLen;
-//}Message_t;
+//}Ble_Message_Pro_t;
 
 typedef struct
 {
