@@ -1,5 +1,5 @@
 [DebugChecksum]
-Checksum=1782953864
+Checksum=1363483877
 [Stack]
 FillEnabled=0
 OverflowWarningsEnabled=1
@@ -55,7 +55,7 @@ Fmt12={W}1:ts	4	0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.68.1" 0 0 1 "" 0 "" 0
+Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.69.1" 0 0 1 "" 0 "" 0
 Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\main.c}.42.5" 0 0 1 "" 0 "" 0
 Count=2
 [Log file]

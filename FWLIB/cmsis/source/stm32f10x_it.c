@@ -406,19 +406,19 @@ void TIM2_IRQHandler(void)
   */
 void TIM3_IRQHandler(void)
 {
-  Ble_Message_Pro_t Message, * ble_Msg_ptr = &Message;  
-  
-  if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
-  {
-    if(SUCCESS == ble_receive(ble_Msg_ptr))
-    {
-        printf("\r\n Ble_receive \r\n");
-        msg_send(ble_Msg_ptr);
-    }
-     memset(ble_Msg_ptr, 0x00, sizeof(Ble_Message_Pro_t));
-    
-   TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
-  }
+//  Ble_Message_Pro_t Message, * ble_Msg_ptr = &Message;  
+//  
+//  if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
+//  {
+//    if(SUCCESS == ble_receive(ble_Msg_ptr))
+//    {
+//        printf("\r\n Ble_receive \r\n");
+//        msg_send(ble_Msg_ptr);
+//    }
+//     memset(ble_Msg_ptr, 0x00, sizeof(Ble_Message_Pro_t));
+//    
+//   TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+//  }
  }
 
 /******************************************************************************/

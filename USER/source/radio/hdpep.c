@@ -1,6 +1,7 @@
 #include "radio/hdpep.h"
 #include "App/app.h"
 
+#ifndef  TRUNKING_MODE
 
 Queue_t HdpepExecQue = NULL;
 unsigned int Local_RadioIP;
@@ -565,3 +566,4 @@ void GroupMessage_rec(void * hdpep)
 }
 
 
+#endif

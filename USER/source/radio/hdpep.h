@@ -4,6 +4,7 @@
 #include "radio/hrnp.h" 
 #include "radio/message.h"
 
+#ifndef  TRUNKING_MODE
 
 #define HDPEP_RCP 0x02  //little-endian mode
 #define HDPEP_LP 0x08   //Bid-endian mode
@@ -260,6 +261,7 @@ static const HdpepExe_t HdpepExeList[MAX_HDPEP_EXE_LIST] =
   
   
 };
+#endif
 #endif
 
 

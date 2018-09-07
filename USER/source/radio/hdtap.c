@@ -496,7 +496,7 @@ void MessageSending_reply(void * hdtap)
 {
     MessageSending_reply_t * reply = (MessageSending_reply_t * )hdtap;
     
-    printf("reply->Result:0x%x\r\n", reply->Result);
+    //printf("reply->Result:0x%x\r\n", reply->Result);
     
      switch(reply->Result)
     {

@@ -171,6 +171,7 @@
           <state>USE_STDPERIPH_DRIVER</state>
           <state>STM32F10X_MD</state>
           <state>USE_STM3210E_EVAL</state>
+          <state>TRUNKING_MODE</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -1919,19 +1920,10 @@
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_dma.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_exti.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_flash.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_gpio.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_rcc.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_tim.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\FWLIB\driver\source\stm32f10x_usart.c</name>

@@ -18,6 +18,8 @@ void hrnp_init(void)
     delaynms(500);
     delaynms(500);
     delaynms(500);
+    delaynms(500);
+    delaynms(500);
     
     IsHrnpConnect = hrnp_connect();
     printf("Hrnp Connect Finished\r\n");

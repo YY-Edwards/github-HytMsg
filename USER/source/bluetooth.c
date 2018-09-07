@@ -4,62 +4,62 @@ Queue_t BluetoothRxQue = NULL;
 u8 USART2_RX_BUFF[USART2_BUFF_LEN]={0};
 RingQueue_t ble_msg_queue_ptr = NULL;
 
-static void rcc_ble_init(void)
-{
-    RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
-    RCC_APB1PeriphClockCmd(USART2_CLK, ENABLE);
-    
-    
-}
-
-static void nvic_ble_init(void)
-{
-    NVIC_InitTypeDef NVIC_InitStructure;
-    
-    /* Configure the NVIC Preemption Priority Bits */  
-    //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
-    
-    /* Enable the USART2 Interrupt */
-    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; //先占优先级 2 级
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;			//子优先级1
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
-}
-
-static void gpio_ble_init(void)
-{          
-    GPIO_InitTypeDef GPIO_InitStructure;
-    
-    /* Configure USART3 Rx as input floating */
-    GPIO_InitStructure.GPIO_Pin = USART2_RxPin;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-    GPIO_Init(USART2_GPIO, &GPIO_InitStructure);    
-    
-    /* Configure USART3 Tx as alternate function push-pull */
-    GPIO_InitStructure.GPIO_Pin = USART2_TxPin;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    
-    GPIO_Init(USART2_GPIO, &GPIO_InitStructure);
-    
-    
-    /* Configure BLE_WKUP(PB9) and BLE_RESET(PB14) as alternate function push-pull */
-    GPIO_InitStructure.GPIO_Pin = BLE_ResetPin | BLE_WkupPin ;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    
-    GPIO_Init(BLE_GPIO, &GPIO_InitStructure);
-    
-    GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
-    delaynms(200);//延时200ms
-    GPIO_SetBits(BLE_GPIO, BLE_ResetPin);//拉高BLE的复位脚:1
-    
-
-    GPIO_ResetBits(BLE_GPIO, BLE_WkupPin);//唤醒BLE:0
-        
-    
-}
+//static void rcc_ble_init(void)
+//{
+//    RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
+//    RCC_APB1PeriphClockCmd(USART2_CLK, ENABLE);
+//    
+//    
+//}
+//
+//static void nvic_ble_init(void)
+//{
+//    NVIC_InitTypeDef NVIC_InitStructure;
+//    
+//    /* Configure the NVIC Preemption Priority Bits */  
+//    //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+//    
+//    /* Enable the USART2 Interrupt */
+//    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+//    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; //先占优先级 2 级
+//    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;			//子优先级1
+//    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//    NVIC_Init(&NVIC_InitStructure);
+//}
+//
+//static void gpio_ble_init(void)
+//{          
+//    GPIO_InitTypeDef GPIO_InitStructure;
+//    
+//    /* Configure USART3 Rx as input floating */
+//    GPIO_InitStructure.GPIO_Pin = USART2_RxPin;
+//    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+//    GPIO_Init(USART2_GPIO, &GPIO_InitStructure);    
+//    
+//    /* Configure USART3 Tx as alternate function push-pull */
+//    GPIO_InitStructure.GPIO_Pin = USART2_TxPin;
+//    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+//    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+//    
+//    GPIO_Init(USART2_GPIO, &GPIO_InitStructure);
+//    
+//    
+//    /* Configure BLE_WKUP(PB9) and BLE_RESET(PB14) as alternate function push-pull */
+//    GPIO_InitStructure.GPIO_Pin = BLE_ResetPin | BLE_WkupPin ;
+//    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+//    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+//    
+//    GPIO_Init(BLE_GPIO, &GPIO_InitStructure);
+//    
+//    GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
+//    delaynms(200);//延时200ms
+//    GPIO_SetBits(BLE_GPIO, BLE_ResetPin);//拉高BLE的复位脚:1
+//    
+//
+//    GPIO_ResetBits(BLE_GPIO, BLE_WkupPin);//唤醒BLE:0
+//        
+//    
+//}
 
 static void ble_usart_interface_init()
 {
@@ -171,25 +171,25 @@ static void ble_usart_interface_init()
 
 }
 
-static void usart_ble_init(void)
-{
-    USART_InitTypeDef USART_InitStructure;
-    
-    USART_InitStructure.USART_BaudRate = 9600;               /*设置波特率为115200*/
-    USART_InitStructure.USART_WordLength = USART_WordLength_8b;/*设置数据位为8*/
-    USART_InitStructure.USART_StopBits = USART_StopBits_1;     /*设置停止位为1位*/
-    USART_InitStructure.USART_Parity = USART_Parity_No;        /*无奇偶校验*/
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;/*无硬件流控*/
-    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;  /*发送和接收*/
-
-    USART_Init(USART2, &USART_InitStructure);
-    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
-    //USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
-
-    USART_Cmd(USART2, ENABLE); 
-    while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
-    {}
-}
+//static void usart_ble_init(void)
+//{
+//    USART_InitTypeDef USART_InitStructure;
+//    
+//    USART_InitStructure.USART_BaudRate = 9600;               /*设置波特率为115200*/
+//    USART_InitStructure.USART_WordLength = USART_WordLength_8b;/*设置数据位为8*/
+//    USART_InitStructure.USART_StopBits = USART_StopBits_1;     /*设置停止位为1位*/
+//    USART_InitStructure.USART_Parity = USART_Parity_No;        /*无奇偶校验*/
+//    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;/*无硬件流控*/
+//    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;  /*发送和接收*/
+//
+//    USART_Init(USART2, &USART_InitStructure);
+//    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+//    //USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
+//
+//    USART_Cmd(USART2, ENABLE); 
+//    while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
+//    {}
+//}
 
 void ble_init(void)
 {
@@ -354,137 +354,137 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
   
 #else
   
-  
-   unsigned char * p = (unsigned char *)msg;
-   static unsigned char Counter = 0;
-   
-   if(queue_ok != QueuePull(BluetoothRxQue, p++))
-   {
-        return FAILURE;
-   }
-   else
-   {   
-        Counter++;
-        delaynms(300);//一帧数据长（68bytes）大约需要传输70ms
-        for(;;)
-        {
-            if(queue_ok != QueuePull(BluetoothRxQue, p++))
-            {
-                break;
-            }
-            else
-            {
-                Counter++;
-            }
-        }
-   }
-   
-   
-   //return SUCCESS;
-   
-   
-   /************测试↓***************/
-   
-   if( sizeof(MessageHeader_t) + 2 <= Counter)
-   {
-     //收到的数据超过协议最大数据包长度（68bytes）也是可以通过的
-     //if((Counter >= sizeof(MessageHeader_t) + msg->Header.Length + 2) && (Msg_Header == htons(msg->Header.Header)) )
-     
-     
-     //即BLE发送0xfffe，即OB板先收到0xff,然后收到0xfe.
-      /*IAR是小端存储数据,即0xff 在前，0xfe在后，即存储数据为0xfeff,因此需要大小端转换*/
-     //双字节数据都应做相同处理
-     
-     /*为测试校验码，对收到的需要校验的数据不做大小端变换并重新赋值处理*/
-     //因为把数据做大小端变化后会影响校验函数的结果.
-     //校验数据包括：地址，命令，长度和数据
-     
-     if((Counter <= sizeof(Ble_Message_Pro_t)) && (Msg_Header == htons(msg->Header.Header)))
-      {
-            
-            switch(msg->Header.Opcode)
-            {
-              
-              case MSG_DATA://0x01
-                  
-                      unsigned short local_rxcheck = msg_checksum(msg);//MODBUS——CRC
-                      //unsigned short rxcheck = *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
-                       msg->Checksum =   *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
-                           
-                      //if(htons(msg->Checksum) == local_rxcheck) //校验有差异 
-                      if(htons(msg->Checksum))
-                      {
-                          ble_rx_counter =0;
-                          Counter = 0;
-                          ble_send_ack(MSG_ACK);
-                          return SUCCESS;//成功
-                      }
-                      else
-                      {
-                          ble_send_ack(MSG_NACK);
-                          
-                          printf("\r\n  Data_CRC is error  \r\n");
-                          
-                      }
-                      
-                    
-                    break;
-                
-            case MSG_ACK://0x00
-                
-                  printf("\r\n  ble_tx_ok  \r\n");
-                
-                
-                  break;
-                  
-            case MSG_ALIVE://0x02
-                  
-                  printf("\r\n  ble_keepalive  \r\n");
-                
-                  break;
-                  
-            case MSG_NACK://0xff
-                
-                  printf("\r\n  ble_tx_error  \r\n");
-                  break;    
-            
-            }
-   
-      }
-     else
-      {
-        if(Counter > sizeof(Ble_Message_Pro_t))printf("\r\n  Packge_length_Over  \r\n"); 
-        else
-         printf("\r\n  Error Packge  \r\n"); 
-        
-        ble_rx_counter =0;
-        Counter = 0;
-        QueueClear(BluetoothRxQue);
-        ble_send_ack(MSG_NACK);
-        
-      }
-     
-   }
-  else if(0 <= Counter <= 3)
-   {
-     printf("\r\n  Error Data  \r\n");
-     printf("\r\n  MSG_NACK_2  \r\n"); 
-     
-     ble_rx_counter =0;
-     Counter = 0;
-     //QueueClear(BluetoothRxQue);
-     ble_send_ack(MSG_NACK);
-     
-    }
-//   else
-//   {
-//      
-//      printf("\r\n  ble_rx_error  \r\n");
+//  
+//   unsigned char * p = (unsigned char *)msg;
+//   static unsigned char Counter = 0;
 //   
+//   if(queue_ok != QueuePull(BluetoothRxQue, p++))
+//   {
+//        return FAILURE;
 //   }
-
-   return FAILURE; 
-   
+//   else
+//   {   
+//        Counter++;
+//        delaynms(300);//一帧数据长（68bytes）大约需要传输70ms
+//        for(;;)
+//        {
+//            if(queue_ok != QueuePull(BluetoothRxQue, p++))
+//            {
+//                break;
+//            }
+//            else
+//            {
+//                Counter++;
+//            }
+//        }
+//   }
+//   
+//   
+//   //return SUCCESS;
+//   
+//   
+//   /************测试↓***************/
+//   
+//   if( sizeof(MessageHeader_t) + 2 <= Counter)
+//   {
+//     //收到的数据超过协议最大数据包长度（68bytes）也是可以通过的
+//     //if((Counter >= sizeof(MessageHeader_t) + msg->Header.Length + 2) && (Msg_Header == htons(msg->Header.Header)) )
+//     
+//     
+//     //即BLE发送0xfffe，即OB板先收到0xff,然后收到0xfe.
+//      /*IAR是小端存储数据,即0xff 在前，0xfe在后，即存储数据为0xfeff,因此需要大小端转换*/
+//     //双字节数据都应做相同处理
+//     
+//     /*为测试校验码，对收到的需要校验的数据不做大小端变换并重新赋值处理*/
+//     //因为把数据做大小端变化后会影响校验函数的结果.
+//     //校验数据包括：地址，命令，长度和数据
+//     
+//     if((Counter <= sizeof(Ble_Message_Pro_t)) && (Msg_Header == htons(msg->Header.Header)))
+//      {
+//            
+//            switch(msg->Header.Opcode)
+//            {
+//              
+//              case MSG_DATA://0x01
+//                  
+//                      unsigned short local_rxcheck = msg_checksum(msg);//MODBUS——CRC
+//                      //unsigned short rxcheck = *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
+//                       msg->Checksum =   *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
+//                           
+//                      //if(htons(msg->Checksum) == local_rxcheck) //校验有差异 
+//                      if(htons(msg->Checksum))
+//                      {
+//                          ble_rx_counter =0;
+//                          Counter = 0;
+//                          ble_send_ack(MSG_ACK);
+//                          return SUCCESS;//成功
+//                      }
+//                      else
+//                      {
+//                          ble_send_ack(MSG_NACK);
+//                          
+//                          printf("\r\n  Data_CRC is error  \r\n");
+//                          
+//                      }
+//                      
+//                    
+//                    break;
+//                
+//            case MSG_ACK://0x00
+//                
+//                  printf("\r\n  ble_tx_ok  \r\n");
+//                
+//                
+//                  break;
+//                  
+//            case MSG_ALIVE://0x02
+//                  
+//                  printf("\r\n  ble_keepalive  \r\n");
+//                
+//                  break;
+//                  
+//            case MSG_NACK://0xff
+//                
+//                  printf("\r\n  ble_tx_error  \r\n");
+//                  break;    
+//            
+//            }
+//   
+//      }
+//     else
+//      {
+//        if(Counter > sizeof(Ble_Message_Pro_t))printf("\r\n  Packge_length_Over  \r\n"); 
+//        else
+//         printf("\r\n  Error Packge  \r\n"); 
+//        
+//        ble_rx_counter =0;
+//        Counter = 0;
+//        QueueClear(BluetoothRxQue);
+//        ble_send_ack(MSG_NACK);
+//        
+//      }
+//     
+//   }
+//  else if(0 <= Counter <= 3)
+//   {
+//     printf("\r\n  Error Data  \r\n");
+//     printf("\r\n  MSG_NACK_2  \r\n"); 
+//     
+//     ble_rx_counter =0;
+//     Counter = 0;
+//     //QueueClear(BluetoothRxQue);
+//     ble_send_ack(MSG_NACK);
+//     
+//    }
+////   else
+////   {
+////      
+////      printf("\r\n  ble_rx_error  \r\n");
+////   
+////   }
+//
+//   return FAILURE; 
+//   
 #endif 
    
   /************测试↑***************/ 
