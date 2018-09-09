@@ -1,10 +1,13 @@
 #include "hdtap.h"
+#include "bluetooth.h"
 
 Queue_t HdtapExecQue = NULL;
 
 static unsigned int RadioID  = 0;
 static unsigned int Master_Turnking_ID  = 0x00FC02B2;//南方电网基站集群下的ID号
 bool trunking_msg_send_okay_flag= true;
+void ( *HdtapOnMessageFunc)(void *); 
+void ( *HdtapMsgResultFunc)(unsigned char, unsigned char); 
 
 unsigned char hdtap_checksum(void * hdtap,  unsigned int PayloadLen)
 {
@@ -372,6 +375,19 @@ void hdtap_init(void)
     
 }
 
+void set_hdtap_on_message_callback(void( *cb)(void *))
+{
+
+  HdtapOnMessageFunc = cb;//注册集群模式下radio收到短信内容的回调函数
+    
+}
+
+void set_hdtap_msg_trans_result_callback(void( *cb)(unsigned char, unsigned char))
+{
+  HdtapMsgResultFunc = cb;//注册集群模式下radio短信发送结果的回调函数
+}
+
+
 
 void hdtap_cfg(void)
 {    
@@ -503,7 +519,7 @@ void MessageSending_reply(void * hdtap)
         case Success:
               
               trunking_msg_send_okay_flag = true;
-              printf("Message Send Service: Success.\r\n");
+              printf("Message Send Service: Success.\r\n");          
         break;
         
         case Failure:
@@ -536,6 +552,8 @@ void MessageSending_reply(void * hdtap)
       
     
     }
+    
+    HdtapMsgResultFunc(CMD_NOTIFY_MSG_SEND_RESULT, reply->Result);
     
 //    if(Hdtap_Sucess == reply->Result)
 //    {
@@ -616,8 +634,9 @@ void MessageReceivingReport_rec(void * hdtap)
         i+=2;
       
       }
-            
-      app_rec_msg(&Msg);         
+      
+     HdtapOnMessageFunc(&Msg);//ble_assemble_data_packet(&Msg);
+     //app_rec_msg(&Msg);         
     }
     else{
       

@@ -3,6 +3,7 @@
 
 #include "radio/hrnp.h" 
 #include "radio/message.h"
+//#include "bluetooth.h"
 
 #define HDTAP 0x02  //little-endian mode
 
@@ -324,11 +325,13 @@ typedef struct
     void  * Parameter; 
 }HdtapExe_t;
 
-
-
+ 
+void set_hdtap_on_message_callback(void( *cb)(void *));
+void set_hdtap_msg_trans_result_callback(void( *cb)(unsigned char, unsigned char));
 void hdtap_init(void);
 void hdtap_cfg(void);
 void hdtap_exe( void * hdtap);
+
 
 void TrunkingPowerUpCheck_req(void * p);
 void TrunkingPowerUpCheck_reply(void *hdtap);

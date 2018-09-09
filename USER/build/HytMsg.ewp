@@ -1942,15 +1942,6 @@
   <group>
     <name>USER</name>
     <group>
-      <name>App</name>
-      <file>
-        <name>$PROJ_DIR$\..\source\App\app.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\source\App\app.h</name>
-      </file>
-    </group>
-    <group>
       <name>Lib</name>
       <file>
         <name>$PROJ_DIR$\..\source\Lib\convert.c</name>

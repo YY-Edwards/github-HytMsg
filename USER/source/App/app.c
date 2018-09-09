@@ -17,7 +17,7 @@ void app_rec_msg(OB_Message_t * msg)
    /*则与BLE的通信时需要大小端转换，即先发送0xff,再发送0xfe*/
    /*双字节数据都需要做大小端转换*/
    
-   Msg.Header.Header = Msg_Header;
+   Msg.Header.Header = BLE_PRO_HEADER;
    Msg.Header.Header = htons(Msg.Header.Header);
    
   
@@ -25,7 +25,7 @@ void app_rec_msg(OB_Message_t * msg)
    Msg.Header.Address = htons(Msg.Header.Address);
    
    
-   Msg.Header.Opcode = 0x01;
+   Msg.Header.Opcode = CMD_DATA;
    
    //最大为248bytes
    if(msg->TMLen >= 248)Msg.Header.Length = 248;//248bytes

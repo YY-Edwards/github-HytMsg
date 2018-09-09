@@ -1,5 +1,5 @@
 #include "message.h"
-#include "app.h"
+//#include "app.h"
 #include "core_cm3.h"
 
 Queue_t MsgRxQue = NULL;
@@ -29,7 +29,7 @@ void msg_receive_event(void * msg)
 {
   //直接就转发了，没有做数据判断
 ////    MessageHeader_t * p = (MessageHeader_t *)msg;
-//    if(Msg_Header != p->Header)return;
+//    if(BLE_PRO_HEADER != p->Header)return;
 //    if(sizeof(Ble_Message_Pro_t) <= sizeof(MessageHeader_t) + p->Length + 2 )return;
 //    
 //    
@@ -151,7 +151,7 @@ unsigned char  msg_receive(Ble_Message_Pro_t * msg)
         {   
           
           printf("[recv:need to reset radio.] \r\n");
-           delaynms(300);      
+          delaynms(300);      
           NVIC_SystemReset();//复位
 
         }
@@ -207,7 +207,7 @@ unsigned int CRC16_2(unsigned char *buf, int len)
 
 unsigned short msg_checksum(Ble_Message_Pro_t * msg)
 {
-  unsigned char temp[255]={0};
+  unsigned char temp[sizeof(Ble_Message_Pro_t)]={0};
   memcpy(temp, (void *)msg, sizeof(Ble_Message_Pro_t));
   return CRC16_2(&temp[2], msg->Header.Length + 4) & 0xFFFF;
 }

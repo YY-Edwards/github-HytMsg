@@ -14,25 +14,27 @@
 #endif
 
 #include "log/log.h"
-#include "app.h"
+//#include "app.h"
 
-#define MSG_DATA 0x01
-#define MSG_ACK  0x00
-#define MSG_ALIVE 0x02
-#define MSG_NACK 0xFF
+#define CMD_DATA                0x01
+#define CMD_ACK                 0x00
+#define CMD_ALIVE               0x02
+#define CMD_NACK                0xFF
 
-#define MAX_MSG_DATA_SIZE  248 //62//多出的两个字节用来存储checksum数据
-#define Msg_Header 0xFFFE
+#define CMD_NOTIFY_MSG_SEND_RESULT        0xB1
+
+#define MAX_MSG_DATA_SIZE  250 //248+2,//62//多出的两个字节用来存储checksum数据
+#define BLE_PRO_HEADER 0xFFFE
 
 
 #pragma pack(1)
 
 typedef struct
 {
-    unsigned short Header;
-    unsigned short Address;
-    unsigned char Opcode;
-    unsigned char Length;
+    unsigned short      Header;
+    unsigned short      Address;
+    unsigned char       Opcode;
+    unsigned char       Length;
     
 }MessageHeader_t;
 

@@ -1,5 +1,5 @@
 [DebugChecksum]
-Checksum=1363483877
+Checksum=-1733904762
 [Stack]
 FillEnabled=0
 OverflowWarningsEnabled=1
@@ -57,7 +57,8 @@ mode=0
 [Breakpoints2]
 Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\hdpep.c}.69.1" 0 0 1 "" 0 "" 0
 Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\main.c}.42.5" 0 0 1 "" 0 "" 0
-Count=2
+Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\source\radio\message.c}.155.11" 0 0 1 "" 0 "" 0
+Count=3
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""

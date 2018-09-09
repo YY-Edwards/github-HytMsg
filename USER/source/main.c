@@ -14,7 +14,7 @@
 #include "stm32f10x.h"
 #include "radio/message.h"
 #include "bluetooth.h"
-#include "app.h"
+
 
 void TIM3_Int_Init(u16 arr,u16 psc);
 
@@ -73,7 +73,7 @@ int main ( void )
         if(Ble_send_flag)//定时触发，可以将心跳放到这里，要求不严格的情况下
         {
             Ble_send_flag = 0;
-            ble_send_ack(MSG_ALIVE);
+            ble_assemble_cmd_packet(CMD_ALIVE, NULL);
             Ble_alive_counter++;
             if(ble_alive_flag)printf("\r\n B_alive:%d \r\n", Ble_alive_counter);
           

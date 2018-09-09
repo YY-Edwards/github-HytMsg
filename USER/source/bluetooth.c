@@ -210,6 +210,9 @@ void ble_init(void)
     return ;
   }
   init_queue(ble_msg_queue_ptr);
+  
+  set_hdtap_on_message_callback(ble_assemble_data_packet);//hdtap中注册回调
+  set_hdtap_msg_trans_result_callback(ble_assemble_cmd_packet);
 #else
   
     rcc_ble_init(); 
@@ -227,7 +230,7 @@ void ble_init(void)
 
 
 
- extern unsigned char  ble_rx_counter;
+extern unsigned char  ble_rx_counter;
 u8 g_usart_recv_buf[256]={0};//全局变量
 Ble_Message_Pro_t g_rx_usart2_msg;
 unsigned char ble_receive(Ble_Message_Pro_t * msg)
@@ -259,7 +262,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
         break;
       case FIND_START_HEADER_L:
             g_rx_usart2_msg.Header.Header = ((g_rx_usart2_msg.Header.Header<<8)&0xff00) | ch;
-            if(g_rx_usart2_msg.Header.Header == Msg_Header)
+            if(g_rx_usart2_msg.Header.Header == BLE_PRO_HEADER)
                m_parser_state = HIGH_ADDR;
             else
               m_parser_state = FIND_START_HEADER_H;
@@ -285,7 +288,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
           if(usart2_recv_msg_len > BLE_PAYLOAD_MAX_LEN)
           {
             usart2_recv_msg_len = BLE_PAYLOAD_MAX_LEN;
-            ble_send_ack(MSG_NACK);                       
+            ble_assemble_cmd_packet(CMD_NACK, NULL);                       
             printf("Usart2 recv data msg length is error  \r\n");
           }
           usart2_recv_msg_len +=2;//需要包含最后两个crc校验数据
@@ -306,21 +309,21 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
             //if(msg_checksum(&g_rx_usart2_msg) ==  g_rx_usart2_msg.Checksum)//校验通过
             if(msg_checksum(&g_rx_usart2_msg)) 
             {
-              if(g_rx_usart2_msg.Header.Opcode == MSG_DATA)
+              if(g_rx_usart2_msg.Header.Opcode == CMD_DATA)
               {
-                  ble_send_ack(MSG_ACK);
+                  ble_assemble_cmd_packet(CMD_ACK, NULL);
                   memcpy(msg, (void *)&g_rx_usart2_msg, usart2_recv_msg_len);
                   parse_ret = SUCCESS;
               }
-              else if(g_rx_usart2_msg.Header.Opcode == MSG_ACK)
+              else if(g_rx_usart2_msg.Header.Opcode == CMD_ACK)
               {
                 printf("Usart2 send msg okay.  \r\n");
               }
-              else if(g_rx_usart2_msg.Header.Opcode == MSG_ALIVE)
+              else if(g_rx_usart2_msg.Header.Opcode == CMD_ALIVE)
               {
                 printf("Usart2 should not recv this msg!  \r\n");
               }
-              else if(g_rx_usart2_msg.Header.Opcode == MSG_NACK)
+              else if(g_rx_usart2_msg.Header.Opcode == CMD_NACK)
               {
                 printf("should check the send msg!  \r\n");
               }
@@ -329,7 +332,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
             else
             {
               
-              ble_send_ack(MSG_NACK);
+              ble_assemble_cmd_packet(CMD_NACK, NULL);
                           
               printf("Usart2 recv data CRC is error  \r\n");
             }
@@ -388,7 +391,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 //   if( sizeof(MessageHeader_t) + 2 <= Counter)
 //   {
 //     //收到的数据超过协议最大数据包长度（68bytes）也是可以通过的
-//     //if((Counter >= sizeof(MessageHeader_t) + msg->Header.Length + 2) && (Msg_Header == htons(msg->Header.Header)) )
+//     //if((Counter >= sizeof(MessageHeader_t) + msg->Header.Length + 2) && (BLE_PRO_HEADER == htons(msg->Header.Header)) )
 //     
 //     
 //     //即BLE发送0xfffe，即OB板先收到0xff,然后收到0xfe.
@@ -399,13 +402,13 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 //     //因为把数据做大小端变化后会影响校验函数的结果.
 //     //校验数据包括：地址，命令，长度和数据
 //     
-//     if((Counter <= sizeof(Ble_Message_Pro_t)) && (Msg_Header == htons(msg->Header.Header)))
+//     if((Counter <= sizeof(Ble_Message_Pro_t)) && (BLE_PRO_HEADER == htons(msg->Header.Header)))
 //      {
 //            
 //            switch(msg->Header.Opcode)
 //            {
 //              
-//              case MSG_DATA://0x01
+//              case CMD_DATA://0x01
 //                  
 //                      unsigned short local_rxcheck = msg_checksum(msg);//MODBUS——CRC
 //                      //unsigned short rxcheck = *(unsigned short *)((unsigned char *)msg +  sizeof(MessageHeader_t) + msg->Header.Length);
@@ -416,12 +419,12 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 //                      {
 //                          ble_rx_counter =0;
 //                          Counter = 0;
-//                          ble_send_ack(MSG_ACK);
+//                          ble_assemble_cmd_packet(CMD_ACK);
 //                          return SUCCESS;//成功
 //                      }
 //                      else
 //                      {
-//                          ble_send_ack(MSG_NACK);
+//                          ble_assemble_cmd_packet(CMD_NACK);
 //                          
 //                          printf("\r\n  Data_CRC is error  \r\n");
 //                          
@@ -430,20 +433,20 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 //                    
 //                    break;
 //                
-//            case MSG_ACK://0x00
+//            case CMD_ACK://0x00
 //                
 //                  printf("\r\n  ble_tx_ok  \r\n");
 //                
 //                
 //                  break;
 //                  
-//            case MSG_ALIVE://0x02
+//            case CMD_ALIVE://0x02
 //                  
 //                  printf("\r\n  ble_keepalive  \r\n");
 //                
 //                  break;
 //                  
-//            case MSG_NACK://0xff
+//            case CMD_NACK://0xff
 //                
 //                  printf("\r\n  ble_tx_error  \r\n");
 //                  break;    
@@ -460,7 +463,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 //        ble_rx_counter =0;
 //        Counter = 0;
 //        QueueClear(BluetoothRxQue);
-//        ble_send_ack(MSG_NACK);
+//        ble_assemble_cmd_packet(CMD_NACK);
 //        
 //      }
 //     
@@ -473,7 +476,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 //     ble_rx_counter =0;
 //     Counter = 0;
 //     //QueueClear(BluetoothRxQue);
-//     ble_send_ack(MSG_NACK);
+//     ble_assemble_cmd_packet(CMD_NACK);
 //     
 //    }
 ////   else
@@ -494,22 +497,22 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 //        if(rxcheck == msg_checksum(msg))  
 //        {
 //        
-//          ble_send_ack(MSG_ACK);
+//          ble_assemble_cmd_packet(CMD_ACK);
 //          return SUCCESS;
 //        }
 //        else
 //        {
-//               ble_send_ack(MSG_NACK);
+//               ble_assemble_cmd_packet(CMD_NACK);
 //        }
 //      }
 //      else
 //      {
-//          ble_send_ack(MSG_NACK);
+//          ble_assemble_cmd_packet(CMD_NACK);
 //      }
 //   }
 //   else if(3 <= Counter)
 //   {
-//      ble_send_ack(MSG_NACK);
+//      ble_assemble_cmd_packet(CMD_NACK);
 //   }
 //   
 //   
@@ -519,7 +522,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 
 void ble_send(Ble_Message_Pro_t * msg)
 {
-     //if(Msg_Header != msg->Header.Header)return;
+     //if(BLE_PRO_HEADER != msg->Header.Header)return;
       
   while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
   
@@ -532,16 +535,92 @@ void ble_send(Ble_Message_Pro_t * msg)
           {}
       }
 }
-          
-void ble_send_ack(unsigned op)
+  
+
+extern Queue_t MsgRxQue ;
+
+void ble_assemble_cmd_packet(unsigned char op, unsigned char reason)
 {
-     Message_ack_t ack;
-     //大小端bug,当时调试时，默认协议格式为大端模式。
-     ack.Header.Header = htons(Msg_Header);
-     ack.Header.Address = 0; 
-     ack.Header.Length = 0;
-     ack.Header.Opcode = op;
-     ack.Checksum = msg_checksum((Ble_Message_Pro_t *)&ack);
-     
-     ble_send((Ble_Message_Pro_t *)&ack);
+//     Message_ack_t ack;
+//     //大小端bug,当时调试时，默认协议格式为大端模式。
+//     ack.Header.Header = htons(BLE_PRO_HEADER);
+//     ack.Header.Address = 0; 
+//     ack.Header.Opcode = op;
+//     ack.Header.Length = 0;  
+//     ack.Checksum = msg_checksum((Ble_Message_Pro_t *)&ack);
+       
+     //ble_send((Ble_Message_Pro_t *)&ack);
+  
+    Ble_Message_Pro_t Msg;
+    memset(&Msg, 0x00, sizeof(Ble_Message_Pro_t));//clear Msg
+    
+    Msg.Header.Header   = htons(BLE_PRO_HEADER);
+    Msg.Header.Address  = 0;
+    Msg.Header.Opcode   = op;
+    
+    if(op == CMD_NOTIFY_MSG_SEND_RESULT)
+    {
+      Msg.Header.Length   = 0x01;
+      Msg.Payload[0]   = reason;
+    }
+    else
+      Msg.Header.Length   = 0x00;
+    
+    
+   Msg.Checksum = msg_checksum((Ble_Message_Pro_t *)&Msg);
+   //Msg.Checksum = htons(Msg.Checksum);//转换成大端
+   
+   //协议结构处理
+   Msg.Payload[Msg.Header.Length] = (unsigned char)(Msg.Checksum>>8);//高字节在前
+   Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum);//低字节在后
+    
+   QueuePush(MsgRxQue, &Msg);   
+    
+}
+
+void ble_assemble_data_packet(void *p)
+{
+   OB_Message_t * msg = (OB_Message_t * )p;
+   
+   Ble_Message_Pro_t Msg;
+   memset(&Msg, 0x00, sizeof(Ble_Message_Pro_t));//clear Msg
+   //IAR是小端存储数据,即低位在前，高位在后。而与蓝牙协议中需要变换为高位在前，低位在后。
+   /*例如:IAR中数据 0xfffe :0xfe  0xff 。则先发送oxfe,再发送0xff*/
+   /*则与BLE的通信时需要大小端转换，即先发送0xff,再发送0xfe*/
+   /*双字节数据都需要做大小端转换*/
+   
+   Msg.Header.Header = BLE_PRO_HEADER;
+   Msg.Header.Header = htons(Msg.Header.Header);
+   
+  
+   Msg.Header.Address = (unsigned short)(msg->src); 
+   Msg.Header.Address = htons(Msg.Header.Address);
+   
+   
+   Msg.Header.Opcode = CMD_DATA;
+   
+   //最大为248bytes
+   if(msg->TMLen >= 248)Msg.Header.Length = 248;//248bytes
+   else
+   Msg.Header.Length = msg->TMLen;
+   
+   memcpy(&(Msg.Payload), msg->TMData, Msg.Header.Length);
+   //memset(&(Msg.Payload[Msg.Header.Length]), 0x00, 248-Msg.Header.Length);
+   
+   
+   
+   Msg.Checksum = msg_checksum((Ble_Message_Pro_t *)&Msg);
+   //这个长度视乎有问题，到时候测试一下
+   //Msg.Checksum = htons(Msg.Checksum);
+   
+   //协议结构处理
+//   Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum>>8);
+//   Msg.Payload[Msg.Header.Length+2] = (unsigned char)(Msg.Checksum);
+   
+   Msg.Payload[Msg.Header.Length] = (unsigned char)(Msg.Checksum>>8);
+   Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum);
+         
+   QueuePush(MsgRxQue, &Msg);
+
+
 }

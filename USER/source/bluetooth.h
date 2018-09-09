@@ -21,6 +21,20 @@
 #define BLE_GPIO                 GPIOB
 #define BLE_GPIO_CLK             RCC_APB2Periph_GPIOB
 
+#pragma pack(1)
+
+typedef struct
+{
+  unsigned char type;
+  unsigned int dest;
+  unsigned int src;
+  unsigned short TMLen;
+  unsigned char TMData[1002];
+   
+}OB_Message_t;
+
+#pragma pack()
+
 
 extern Queue_t BluetoothRxQue;
 
@@ -28,7 +42,9 @@ void ble_init(void);
 void ble_send(Ble_Message_Pro_t * msg);
 unsigned char ble_receive(Ble_Message_Pro_t * msg);
 
-void ble_send_ack(unsigned op);
+void ble_assemble_cmd_packet(unsigned char op, unsigned char reason);
+//void ble_assemble_data_packet(OB_Message_t * msg);
+void ble_assemble_data_packet(void *);
 
 typedef enum 
 {
