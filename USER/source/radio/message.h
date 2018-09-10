@@ -32,11 +32,11 @@
 typedef struct
 {
     unsigned short      Header;
-    unsigned short      Address;
-    unsigned char       Opcode;
+    //unsigned short      Address;
     unsigned char       Length;
+    unsigned char       Opcode;
     
-}MessageHeader_t;
+}MessageHeader_t;//重新调整协议结构
 
 
 typedef struct

@@ -1,5 +1,5 @@
 [DebugChecksum]
-Checksum=-1733904762
+Checksum=746094221
 [Stack]
 FillEnabled=0
 OverflowWarningsEnabled=1
@@ -26,11 +26,10 @@ Fmt2=MessageHeader_t-Address	4	0
 Fmt3=MessageHeader_t-Header	4	0
 Fmt4=MessageHeader_t-Length	4	0
 Fmt5=MessageHeader_t-Opcode	4	0
-Fmt6=Message_ack_t-Checksum	4	0
-Fmt7=OB_Message_t-TMLen	4	0
-Fmt8=OB_Message_t-dest	4	0
-Fmt9=OB_Message_t-src	4	0
-Fmt10=OB_Message_t-type	4	0
+Fmt6=OB_Message_t-TMLen	4	0
+Fmt7=OB_Message_t-dest	4	0
+Fmt8=OB_Message_t-src	4	0
+Fmt9=OB_Message_t-type	4	0
 [array_types]
 Fmt0=u8[200]	4	0
 Fmt1=unsigned char[1000]	4	0

@@ -50,10 +50,10 @@ typedef enum
 {
   FIND_START_HEADER_H =7,
   FIND_START_HEADER_L =1,
-  HIGH_ADDR =2,
-  LOW_ADDR =3,
-  COMMAND =4,
+  //HIGH_ADDR =2,
+ // LOW_ADDR =3,
   LENGTH = 5,
+  COMMAND =4,
   READ_DATA =6//°üº¬2bytesµÄCRC
 }PARSERSTATE;
 

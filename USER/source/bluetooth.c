@@ -231,7 +231,7 @@ void ble_init(void)
 
 
 extern unsigned char  ble_rx_counter;
-u8 g_usart_recv_buf[256]={0};//全局变量
+u8 g_usart_recv_buf[512]={0};//全局变量
 Ble_Message_Pro_t g_rx_usart2_msg;
 unsigned char ble_receive(Ble_Message_Pro_t * msg)
 {
@@ -263,39 +263,42 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
       case FIND_START_HEADER_L:
             g_rx_usart2_msg.Header.Header = ((g_rx_usart2_msg.Header.Header<<8)&0xff00) | ch;
             if(g_rx_usart2_msg.Header.Header == BLE_PRO_HEADER)
-               m_parser_state = HIGH_ADDR;
+               m_parser_state = LENGTH;
             else
               m_parser_state = FIND_START_HEADER_H;
         
         break;
-      case HIGH_ADDR:
-          g_rx_usart2_msg.Header.Address = ch;    
-          m_parser_state = LOW_ADDR;
-        break;
-      case LOW_ADDR:
-          g_rx_usart2_msg.Header.Address = ((g_rx_usart2_msg.Header.Address<<8)&0xff00) | ch;   
-          m_parser_state = COMMAND;
         
-        break;
+      case LENGTH:
+            g_rx_usart2_msg.Header.Length = ch; 
+            usart2_recv_msg_len = ch;
+            if((usart2_recv_msg_len -1) > BLE_PAYLOAD_MAX_LEN)
+            {
+              usart2_recv_msg_len = (BLE_PAYLOAD_MAX_LEN +1);
+              ble_assemble_cmd_packet(CMD_NACK, NULL);                       
+              printf("Usart2 recv data msg length is error  \r\n");
+            }
+            usart2_recv_msg_len -=1;//减去cmd，因为协议中定义的len包含cmd(1byte)+data(nbytes)
+            usart2_recv_msg_len +=2;//需要包含最后两个crc校验数据
+            usart2_recv_msg_idx = 0;
+            m_parser_state = COMMAND;//get rest of msg
+
+            break;
+//      case HIGH_ADDR:
+//          g_rx_usart2_msg.Header.Address = ch;    
+//          m_parser_state = LOW_ADDR;
+//        break;
+//      case LOW_ADDR:
+//          g_rx_usart2_msg.Header.Address = ((g_rx_usart2_msg.Header.Address<<8)&0xff00) | ch;   
+//          m_parser_state = COMMAND;
+//        
+//        break;
       case COMMAND:
           g_rx_usart2_msg.Header.Opcode = ch;    
-          m_parser_state = LENGTH;
+          m_parser_state = READ_DATA;
         
         break;
-      case LENGTH:
-          g_rx_usart2_msg.Header.Length = ch; 
-          usart2_recv_msg_len = ch;
-          if(usart2_recv_msg_len > BLE_PAYLOAD_MAX_LEN)
-          {
-            usart2_recv_msg_len = BLE_PAYLOAD_MAX_LEN;
-            ble_assemble_cmd_packet(CMD_NACK, NULL);                       
-            printf("Usart2 recv data msg length is error  \r\n");
-          }
-          usart2_recv_msg_len +=2;//需要包含最后两个crc校验数据
-          usart2_recv_msg_idx = 0;
-          m_parser_state = READ_DATA;//get rest of msg
         
-        break;
       case READ_DATA:
           g_rx_usart2_msg.Payload[usart2_recv_msg_idx++] = ch;
           if((--usart2_recv_msg_len) == 0)
@@ -523,10 +526,15 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
 void ble_send(Ble_Message_Pro_t * msg)
 {
      //if(BLE_PRO_HEADER != msg->Header.Header)return;
+  int send_len = 
+    sizeof(msg->Header.Header) 
+      + sizeof(msg->Header.Length) 
+        + msg->Header.Length 
+          + sizeof(msg->Checksum);
       
   while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
   
-      for(int i = 0; i < msg->Header.Length + sizeof(MessageHeader_t) + 2 ; i++ )
+      for(int i = 0; i <send_len ; i++ )
     //for(int i = 0; i < 10 ; i++ )
       {
           USART_SendData(USART2, *((unsigned char *)msg + i));
@@ -555,24 +563,25 @@ void ble_assemble_cmd_packet(unsigned char op, unsigned char reason)
     memset(&Msg, 0x00, sizeof(Ble_Message_Pro_t));//clear Msg
     
     Msg.Header.Header   = htons(BLE_PRO_HEADER);
-    Msg.Header.Address  = 0;
+    //Msg.Header.Address  = 0;
     Msg.Header.Opcode   = op;
     
     if(op == CMD_NOTIFY_MSG_SEND_RESULT)
     {
-      Msg.Header.Length   = 0x01;
+      Msg.Header.Length   = 0x02;
       Msg.Payload[0]   = reason;
     }
     else
-      Msg.Header.Length   = 0x00;
+      Msg.Header.Length   = 0x01;
+    
     
     
    Msg.Checksum = msg_checksum((Ble_Message_Pro_t *)&Msg);
    //Msg.Checksum = htons(Msg.Checksum);//转换成大端
    
    //协议结构处理
-   Msg.Payload[Msg.Header.Length] = (unsigned char)(Msg.Checksum>>8);//高字节在前
-   Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum);//低字节在后
+   Msg.Payload[Msg.Header.Length-1] = (unsigned char)(Msg.Checksum>>8);//高字节在前
+   Msg.Payload[Msg.Header.Length] = (unsigned char)(Msg.Checksum);//低字节在后
     
    QueuePush(MsgRxQue, &Msg);   
     
@@ -593,18 +602,19 @@ void ble_assemble_data_packet(void *p)
    Msg.Header.Header = htons(Msg.Header.Header);
    
   
-   Msg.Header.Address = (unsigned short)(msg->src); 
-   Msg.Header.Address = htons(Msg.Header.Address);
+//   Msg.Header.Address = (unsigned short)(msg->src); 
+//   Msg.Header.Address = htons(Msg.Header.Address);
    
+   
+   //最大为248bytes
+   if(msg->TMLen >= 248)Msg.Header.Length = (248 + sizeof(Msg.Header.Opcode));//249bytes
+   else
+     Msg.Header.Length = (msg->TMLen + sizeof(Msg.Header.Opcode));//length:opcode+payload
    
    Msg.Header.Opcode = CMD_DATA;
    
-   //最大为248bytes
-   if(msg->TMLen >= 248)Msg.Header.Length = 248;//248bytes
-   else
-   Msg.Header.Length = msg->TMLen;
-   
-   memcpy(&(Msg.Payload), msg->TMData, Msg.Header.Length);
+   memcpy(&(Msg.Payload), msg->TMData, (Msg.Header.Length - sizeof(Msg.Header.Opcode)));
+   //memcpy(&(Msg.Payload), msg->TMData, Msg.Header.Length);
    //memset(&(Msg.Payload[Msg.Header.Length]), 0x00, 248-Msg.Header.Length);
    
    
@@ -617,8 +627,8 @@ void ble_assemble_data_packet(void *p)
 //   Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum>>8);
 //   Msg.Payload[Msg.Header.Length+2] = (unsigned char)(Msg.Checksum);
    
-   Msg.Payload[Msg.Header.Length] = (unsigned char)(Msg.Checksum>>8);
-   Msg.Payload[Msg.Header.Length+1] = (unsigned char)(Msg.Checksum);
+   Msg.Payload[Msg.Header.Length -1] = (unsigned char)(Msg.Checksum>>8);
+   Msg.Payload[Msg.Header.Length] = (unsigned char)(Msg.Checksum);
          
    QueuePush(MsgRxQue, &Msg);
 

@@ -209,5 +209,6 @@ unsigned short msg_checksum(Ble_Message_Pro_t * msg)
 {
   unsigned char temp[sizeof(Ble_Message_Pro_t)]={0};
   memcpy(temp, (void *)msg, sizeof(Ble_Message_Pro_t));
-  return CRC16_2(&temp[2], msg->Header.Length + 4) & 0xFFFF;
+  return CRC16_2(&temp[2], msg->Header.Length + 1) & 0xFFFF;
+  //return CRC16_2(&temp[2], msg->Header.Length + 4) & 0xFFFF;
 }
