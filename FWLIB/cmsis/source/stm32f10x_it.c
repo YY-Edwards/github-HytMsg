@@ -130,7 +130,7 @@ void SysTick_Handler(void)
       ble_counter= 0;
       Msg_send_flag = 1;
     }
-    if(counter == 15000)//15s
+    if(counter == 5000)//5s
     {
       counter = 0;
       Ble_send_flag = 1;

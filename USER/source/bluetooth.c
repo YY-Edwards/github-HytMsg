@@ -307,7 +307,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
             g_rx_usart2_msg.Checksum = 
               (((g_rx_usart2_msg.Payload[usart2_recv_msg_idx-2]<<8) &0xff00) | g_rx_usart2_msg.Payload[usart2_recv_msg_idx-1]);      
             
-            usart2_recv_msg_len = g_rx_usart2_msg.Header.Length + 6+ 2;//ble与usart2之间同行协议的总长度。
+            usart2_recv_msg_len = g_rx_usart2_msg.Header.Length + 3 + 2;//ble与usart2之间通信协议的总长度。
             
             //if(msg_checksum(&g_rx_usart2_msg) ==  g_rx_usart2_msg.Checksum)//校验通过
             if(msg_checksum(&g_rx_usart2_msg)) 

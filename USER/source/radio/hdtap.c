@@ -38,6 +38,9 @@ void MessageSendingRequest(void * p)
     Ble_Message_Pro_t * msg = (Ble_Message_Pro_t *)p;
     
     TrunkingMessage_req_t TrunkingMessage_req, *req = &TrunkingMessage_req;
+    memset(req, 0x00, sizeof(TrunkingMessage_req_t));//clear buff
+    
+    int msg_content_len = (msg->Header.Length -1);
     
     req->Header.MshHdr = HDTAP;//0x02
    
@@ -49,9 +52,9 @@ void MessageSendingRequest(void * p)
     req->Header.Opcode.Store = op.Store;//0x0c08
     
     //集群模式最大可发送248bytes的负载数据
-    if(msg->Header.Length >= 248)req->Header.Length = (248+8);//如果ble发过来的数据超过248bytes,则留两个字节给END
+    if(msg->Header.Length >= (248 + 1))req->Header.Length = (248+8);//如果ble发过来的数据超过248bytes,则留两个字节给END
     else
-      req->Header.Length = (msg->Header.Length + 8);//TargetID[4]+CallType[1]+Option[1]+Datalen[2]+Msg[Datalen]
+      req->Header.Length = (msg_content_len + 8);//TargetID[4]+CallType[1]+Option[1]+Datalen[2]+Msg[Datalen]
     
     /**Target radio ID (air interface value) which a message to be sent to**/
     //req->TargetID = ID2IP(2);
@@ -65,14 +68,14 @@ void MessageSendingRequest(void * p)
     //Most significant 3-bit indicates the message type 
     //while least significant 5-bit indicates the data format of the text message:
     req->Option = 0x00;
-    req->Datalen = msg->Header.Length;
+    req->Datalen = msg_content_len;
       
-    memcpy(req->TMData, msg->Payload, msg->Header.Length);
+    memcpy(req->TMData, msg->Payload, msg_content_len);
     
     unsigned char i =0;
     unsigned char temp =0;
  
-    for(i=0 ; i<msg->Header.Length; )
+    for(i=0 ; i<msg_content_len; )
     {
       //将Ble发过来的短信数据每两个字节进行大小端转换为Radio可以识别大端的unicode码
       temp = req->TMData[i];
@@ -82,7 +85,7 @@ void MessageSendingRequest(void * p)
     
     }
     
-    memset(&(req->TMData[msg->Header.Length]), 0x00, Hdtap_Msg_Payload_Len-(msg->Header.Length));//TMData未用的部分清零。
+    //memset(&(req->TMData[msg->Header.Length]), 0x00, Hdtap_Msg_Payload_Len-(msg->Header.Length));//TMData未用的部分清零。
 
   
     //注意地址
@@ -90,15 +93,15 @@ void MessageSendingRequest(void * p)
     req->End.MsgEnd = MSH_END;
       
   //协议结构处理,将checksum 和msgend 贴在TMData的末尾以便传输。
-    req->TMData[msg->Header.Length] =  req->End.Checksum; 
-    req->TMData[msg->Header.Length+1] =  req->End.MsgEnd; 
+    req->TMData[msg_content_len] =  req->End.Checksum; 
+    req->TMData[msg_content_len+1] =  req->End.MsgEnd; 
       
     //HdtapEnd_t * end = (HdtapEnd_t *)((unsigned char *)req + sizeof(HdtapHeader_t) + msg->Header.Length);
     
     //end->Checksum = hdtap_checksum(req, htons(req->Header.Length));
     //end->MsgEnd = MSH_END; 
   
-    hrnp_data((void *)req,  sizeof(HdtapHeader_t) + sizeof(HdtapEnd_t) + msg->Header.Length + 8);
+    hrnp_data((void *)req,  sizeof(HdtapHeader_t) + sizeof(HdtapEnd_t) + msg_content_len + 8);
 
 }
 
