@@ -245,6 +245,7 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
   memset(g_usart_recv_buf, 0x00, sizeof(g_usart_recv_buf));
   bool ret = take_from_queue(ble_msg_queue_ptr, &g_usart_recv_buf[0], &recv_len, true);
   if(ret != true)return FAILURE;
+  unsigned short calculated_crc = 0x0000;
   int index =0;
   int bytecount =0;
   u8 ch =0;
@@ -309,8 +310,9 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
             
             usart2_recv_msg_len = g_rx_usart2_msg.Header.Length + 3 + 2;//ble与usart2之间通信协议的总长度。
             
-            //if(msg_checksum(&g_rx_usart2_msg) ==  g_rx_usart2_msg.Checksum)//校验通过
-            if(msg_checksum(&g_rx_usart2_msg)) 
+            calculated_crc = msg_checksum(&g_rx_usart2_msg);
+            if(calculated_crc ==  g_rx_usart2_msg.Checksum)//校验通过
+            //if(msg_checksum(&g_rx_usart2_msg)) 
             {
               if(g_rx_usart2_msg.Header.Opcode == CMD_DATA)
               {
@@ -334,6 +336,9 @@ unsigned char ble_receive(Ble_Message_Pro_t * msg)
             }
             else
             {
+              
+              printf("Usart2 recv crc:0x%x, calculated crc: 0x%x  \r\n",
+                     g_rx_usart2_msg.Checksum,  calculated_crc);
               
               ble_assemble_cmd_packet(CMD_NACK, NULL);
                           
