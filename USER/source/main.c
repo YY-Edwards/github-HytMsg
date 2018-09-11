@@ -37,6 +37,7 @@ unsigned char  Msg_send_flag = 0;
 unsigned char Ble_alive_counter = 0;
 
 
+
 int main ( void )
 {  
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//配置中断优先组，统一一次性配置。

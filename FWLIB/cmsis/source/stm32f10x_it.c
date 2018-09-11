@@ -130,7 +130,7 @@ void SysTick_Handler(void)
       ble_counter= 0;
       Msg_send_flag = 1;
     }
-    if(counter == 15000)//5s
+    if(counter == 5000)//5s
     {
       counter = 0;
       Ble_send_flag = 1;
@@ -281,13 +281,13 @@ void USART2_IRQHandler(void)
         temp = USART2->SR;	   //貌似根据手册说，先读SR，再读DR就可以清除IDLE位。。。。
         temp = USART2->DR;	        
         DMARxCounter = sizeof(USART2_RX_BUFF) - DMA_GetCurrDataCounter(DMA1_Channel6);	//缓冲器数量够大//用缓冲器的设定值-当前指针数值（寄存器内容在每次DMA传输后递减）=接收的数据长度。 
-        printf("-------Usart2 rx counter: %d\n\r",DMARxCounter);      
+        //printf("-------Usart2 rx counter: %d\n\r",DMARxCounter);      
         //DMA_GetInputBytes(USART2_RX_BUFF, DMARxCounter);
         
         bool ret = push_to_queue(ble_msg_queue_ptr, USART2_RX_BUFF, DMARxCounter);
         if(ret == false)
         {
-          printf("-------Usart2 rx queue full !\n\r");
+          //printf("-------Usart2 rx queue full !\n\r");
         }
         
         memset(USART2_RX_BUFF, 0x00, sizeof(USART2_RX_BUFF));

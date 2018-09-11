@@ -9,20 +9,41 @@ unsigned char hrnp_close(void);
 unsigned char hrnp_close_ack(Hrnp_t *);
 unsigned char hrnp_data_ack(Hrnp_t *);
 bool Radio_Reject_Msg_flag=false;
-
+extern unsigned char g_soft_reset_flag;
 void hrnp_init(void)
 {
     physical_init();
     
-    delaynms(500);
-    delaynms(500);
-    delaynms(500);
-    delaynms(500);
-    delaynms(500);
-    delaynms(500);
+    for(int i =0; i<25; i++)
+    {
+      delaynms(500);//需要等待radio成功开机后才能连接上radio
+    }
+
+    printf("start to connect radio.\r\n");
     
-    IsHrnpConnect = hrnp_connect();
-    printf("Hrnp Connect Finished\r\n");
+    int reconnect_counts=  0;
+    
+    do
+    {
+      IsHrnpConnect = hrnp_connect();
+      if(IsHrnpConnect == SUCCESS)
+      {
+        printf("Hrnp Connect Finished\r\n");
+      }
+      else
+      {
+        printf("Connecting radio...\r\n");
+        //delaynms(300);
+        delaynms(300);
+        reconnect_counts++;
+        if(reconnect_counts > 3)
+        {
+          printf("Reset OB.\r\n");
+          delaynms(100);
+          NVIC_SystemReset();//复位
+        }
+      }
+    }while(IsHrnpConnect != SUCCESS);
 }
 
 unsigned short GetHrnpChecksum(unsigned char * pHeader, unsigned char *pData, unsigned int len)
@@ -206,7 +227,7 @@ unsigned char  hrnp_connect(void)
                 
                 if(SUCCESS != hrnp_receive(&hrnp))
                 {
-                    delaynms(100);
+                    delaynms(300);
                     timeoutnumber++;
                     if(timeoutnumber >= 10)//1s
                     {
