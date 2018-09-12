@@ -3,7 +3,76 @@
 Queue_t BluetoothRxQue = NULL;
 u8 USART2_RX_BUFF[USART2_BUFF_LEN]={0};
 RingQueue_t ble_msg_queue_ptr = NULL;
+extern unsigned int RadioID;
 
+static void usart2_send_data(void *p, int p_len)
+{
+  while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
+  for(int i = 0; i <p_len ; i++ )
+  {
+       USART_SendData(USART2, *((unsigned char *)p + i));
+      /* Loop until the end of transmission */
+      while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
+      {}
+  }
+
+}
+
+static void ble_update_device_name(void)
+{
+  USART_InitTypeDef USART_InitStructure;
+  /* 使能串口2 */
+  USART_InitStructure.USART_BaudRate = 9600;               /*设置波特率为9600*/
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;/*设置数据位为8*/
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;     /*设置停止位为1位*/
+  USART_InitStructure.USART_Parity = USART_Parity_No;        /*无奇偶校验*/
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;/*无硬件流控*/
+  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;  /*发送和接收*/
+
+  /*配置串口2 */
+  USART_Init(USART2, &USART_InitStructure);
+  
+  USART_Cmd(USART2, ENABLE);
+  USART_ClearFlag(USART2,USART_FLAG_TC); //清除USART_FLAG_TC，解决第一个字节不能发出的问题 
+  while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
+    {}
+  
+  const char name_str[]="AT+NAME=Hytera#0x";
+  char temp_str[50]={0};
+  memcpy(temp_str, name_str, sizeof(name_str)-1);
+  if(RadioID > 0x00FFFFFF)
+  {
+    sprintf(&temp_str[sizeof(name_str)-1], "%8X", RadioID);
+  }
+  else
+  {
+    sprintf(&temp_str[sizeof(name_str)-1], "00%6X", RadioID);
+  }
+  sprintf(&temp_str[sizeof(name_str)-1+8], "%s", "\r\n");
+  
+  const char goto_data_mode_str[]="AT+MODE=DATA\r\n";
+  
+  //1.首先退出数传进入命令模式
+  GPIO_ResetBits(BLE_GPIO, BLE_INTPin);//SET:0
+  delaynms(500);
+  GPIO_SetBits(BLE_GPIO, BLE_INTPin);//SET:1
+  GPIO_SetBits(BLE_GPIO, BLE_WkupPin);//SET:1
+  //2.设置名称
+  
+  usart2_send_data((void*)temp_str, (sizeof(name_str)-1)+8+2);
+  delaynms(100);
+  
+  //3.进入数传模式
+  
+  usart2_send_data((void*)goto_data_mode_str, sizeof(goto_data_mode_str)-1);
+  
+  delaynms(500);
+  
+  
+  USART_DeInit(USART2);
+  
+  USART_Cmd(USART2, DISABLE);
+}
 //static void rcc_ble_init(void)
 //{
 //    RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
@@ -70,7 +139,7 @@ static void ble_usart_interface_init()
   NVIC_InitTypeDef NVIC_InitStructure;
  
   /*使能串口2,BLE模块使用的GPIO时钟*/
-   RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
+  RCC_APB2PeriphClockCmd(USART2_GPIO_CLK | BLE_GPIO_CLK, ENABLE);
 
   /*使能串口2时钟*/
   RCC_APB1PeriphClockCmd(USART2_CLK, ENABLE); 
@@ -87,8 +156,8 @@ static void ble_usart_interface_init()
   
   GPIO_Init(USART2_GPIO, &GPIO_InitStructure);
 
-  /* Configure BLE_WKUP(PB9) and BLE_RESET(PB14) as alternate function push-pull */
-  GPIO_InitStructure.GPIO_Pin = BLE_ResetPin | BLE_WkupPin ;
+    /* Configure BLE_WKUP(PB9) BLE_INT(PB8) and BLE_RESET(PB14) as alternate function push-pull */
+  GPIO_InitStructure.GPIO_Pin = BLE_ResetPin | BLE_WkupPin | BLE_INTPin ;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   
@@ -97,9 +166,18 @@ static void ble_usart_interface_init()
   //GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
   delaynms(200);//延时200ms
   GPIO_SetBits(BLE_GPIO, BLE_ResetPin);//拉高BLE的复位脚:1
-  
-
+  GPIO_SetBits(BLE_GPIO, BLE_INTPin);//SET:1
   GPIO_ResetBits(BLE_GPIO, BLE_WkupPin);//唤醒BLE:0
+  
+  
+  //更新蓝牙模块名称,更新后需要再次手动复位才能正常工作
+  ble_update_device_name();
+  GPIO_ResetBits(BLE_GPIO, BLE_ResetPin);//复位BLE:0
+  delaynms(200);//延时200ms
+  GPIO_SetBits(BLE_GPIO, BLE_ResetPin);//拉高BLE的复位脚:1
+  GPIO_SetBits(BLE_GPIO, BLE_INTPin);//SET:1
+  GPIO_ResetBits(BLE_GPIO, BLE_WkupPin);//唤醒BLE:0
+  
   
   /* USART2 configuration ------------------------------------------------------*/
 

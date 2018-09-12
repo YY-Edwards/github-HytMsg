@@ -18,6 +18,7 @@
 
 #define BLE_ResetPin             GPIO_Pin_14
 #define BLE_WkupPin              GPIO_Pin_9
+#define BLE_INTPin               GPIO_Pin_8
 #define BLE_GPIO                 GPIOB
 #define BLE_GPIO_CLK             RCC_APB2Periph_GPIOB
 

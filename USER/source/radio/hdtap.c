@@ -3,7 +3,7 @@
 
 Queue_t HdtapExecQue = NULL;
 
-static unsigned int RadioID  = 0;
+unsigned int RadioID  = 0;
 static unsigned int Master_Turnking_ID  = 0x00FC02B2;//南方电网基站集群下的ID号
 bool trunking_msg_send_okay_flag= true;
 void ( *HdtapOnMessageFunc)(void *); 
